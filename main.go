@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 	"syscall"
 
 	g "github.com/AllenDang/giu"
@@ -15,6 +16,30 @@ func handle(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func buildCmdMenu(cfgToml CfgToml) []*g.RowWidget {
+	// created sort keys
+	// without this, the menu will ranomdly change
+	// ordering, as go does
+	var sortedKeys = make([]string, 0, len(cfgToml))
+	for key := range cfgToml {
+		sortedKeys = append(sortedKeys, key)
+	}
+	sort.Strings(sortedKeys)
+
+	// create the ui
+	var rowWidgets = make([]*g.RowWidget, 0, len(cfgToml))
+	for _, key := range sortedKeys {
+		value := cfgToml[key]
+
+		rowWidgets = append(rowWidgets, g.Row(
+			g.Label(key),
+			g.Label(value.Cmd),
+		))
+	}
+
+	return rowWidgets
 }
 
 func runCmdOnce(key string, cmd string, runWith string) {
@@ -41,11 +66,11 @@ func runCmdOnce(key string, cmd string, runWith string) {
 
 	if runWith == "" {
 		name = "/bin/bash"
-		argv = []string{"-c", cmd}
+		argv = []string{name, "-c", cmd}
 	} else {
 		// TODO: pass into exec manually
 		name = "/bin/bash"
-		argv = []string{"-c", cmd}
+		argv = []string{name, "-c", cmd}
 	}
 
 	process, err := os.StartProcess(name, argv, &attr)
@@ -64,7 +89,7 @@ func loop(cfg CfgToml) {
 	}
 
 	g.SingleWindow("Runner").Layout(
-		g.Label("Thing"),
+		g.Table("Command Table").FastMode(true).Rows(buildCmdMenu(cfg)...),
 	)
 }
 
