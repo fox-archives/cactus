@@ -9,24 +9,25 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-type CfgToml map[string]struct {
+type CfgToml map[string]CfgEntry
+type CfgEntry struct {
 	Cmd string `toml: "cmd"`
 	Run string `toml: "run"`
 }
 
-func getCfgDir() string {
+func getCfgFile() string {
+	var cfgDir string
+
 	if os.Getenv("XDG_CONFIG_HOME") != "" {
-		return os.Getenv("XDG_CONFIG_HOME")
+		cfgDir = os.Getenv("XDG_CONFIG_HOME")
 	} else {
-		return filepath.Join(os.Getenv("HOME"), ".config")
+		cfgDir = filepath.Join(os.Getenv("HOME"), ".config")
 	}
+
+	return filepath.Join(cfgDir, "cactus", "binds.toml")
 }
 
-func getCfg() CfgToml {
-	// TODO: use ini
-	cfgFile := filepath.Join(getCfgDir(), "cactus", "bindings.toml")
-	var cfgToml CfgToml
-
+func getCfg(cfgFile string) CfgToml {
 	cfgText, err := ioutil.ReadFile(cfgFile)
 	if os.IsNotExist(err) {
 		fmt.Printf("Error: Config file '%s' does not exist\n", cfgFile)
@@ -34,6 +35,7 @@ func getCfg() CfgToml {
 	}
 	handle(err)
 
+	var cfgToml CfgToml
 	err = toml.Unmarshal(cfgText, &cfgToml)
 	handle(err)
 
