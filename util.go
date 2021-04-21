@@ -17,15 +17,17 @@ func runCmdOnce(key string, cmd string, runWith string) {
 
 	isRunning = true
 
+	// stdin, err := os.Open("/dev/null")
+	// handle(err)
+	// stdout, err := os.OpenFile("/dev/null", os.O_RDWR, os.ModeCharDevice)
+	// handle(err)
+	// stderr, err := os.OpenFile("/dev/null", os.O_RDWR, os.ModeCharDevice)
+	// handle(err)
+
 	var sysproc = &syscall.SysProcAttr{Noctty: true}
 	var attr = os.ProcAttr{
 		Dir: os.Getenv("HOME"),
 		Env: os.Environ(),
-		Files: []*os.File{
-			os.Stdin,
-			nil,
-			nil,
-		},
 		Sys: sysproc,
 	}
 
@@ -33,15 +35,16 @@ func runCmdOnce(key string, cmd string, runWith string) {
 	var argv []string
 
 	if runWith == "" {
-		name = "/bin/bash"
-		argv = []string{name, "-c", cmd}
+		name = "/usr/bin/systemd-run"
+		argv = []string{"systemd-run", "--user", "bash", "-c", cmd}
 	} else {
 		// TODO: pass into exec manually
 		name = "/bin/bash"
 		argv = []string{name, "-c", cmd}
 	}
 
-	process, err := os.StartProcess(name, argv, &attr)
+	process, err := os.StartProcess("systemd-run", argv, &attr)
+	// process, err := os.StartProcess(name, argv, &attr)
 	handle(err)
 
 	err = process.Release()

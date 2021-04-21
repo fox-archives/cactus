@@ -8,6 +8,10 @@ import (
 )
 
 func loop(cfg CfgToml) {
+	if g.IsKeyDown(g.KeyEscape) {
+		os.Exit(0)
+	}
+
 	for key, value := range cfg {
 		if g.IsKeyDown(keyMap[key]) {
 			runCmdOnce(key, value.Cmd, value.Run)

@@ -1,9 +1,15 @@
 # cactus
 
+Hotkey launcher
+
 ## Description
 
 Meant to be used as as a secondary application launcher. As an alternative a separate launch mode you can create
 with i3, etc.
+
+NOTE
+
+Doesn't work as it's intended purpuse, fails when not ran within a tty
 
 Ex. sxhkdrc
 
@@ -15,9 +21,15 @@ super + y
 ## Configuration
 
 ```toml
-# $XDG_CONFIG_HOME/cactus/bindings.toml
-[E]
-cmd = "echo 'fortune'"
+# $XDG_CONFIG_HOME/cactus/binds.toml
+[A]
+cmd = "pavucontrol"
+
+[O]
+cmd = "obs"
+
+[C]
+cmd = "code"
 ```
 
 ## Key Names
