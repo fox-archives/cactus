@@ -28,6 +28,11 @@ func runCmdOnce(key string, cmd string, runWith string) {
 	var attr = os.ProcAttr{
 		Dir: os.Getenv("HOME"),
 		Env: os.Environ(),
+		Files: []*os.File{
+			os.Stdin,
+			nil,
+			nil,
+		},
 		Sys: sysproc,
 	}
 
@@ -43,7 +48,7 @@ func runCmdOnce(key string, cmd string, runWith string) {
 		argv = []string{name, "-c", cmd}
 	}
 
-	process, err := os.StartProcess("systemd-run", argv, &attr)
+	process, err := os.StartProcess("/usr/bin/systemd-run", argv, &attr)
 	// process, err := os.StartProcess(name, argv, &attr)
 	handle(err)
 
