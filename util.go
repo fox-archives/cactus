@@ -1,65 +1,56 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
 	"sort"
-	"syscall"
 
 	g "github.com/AllenDang/giu"
+	"github.com/google/uuid"
 )
 
 var isRunning = false
 
-func runCmd(key string, cfgEntry CfgEntry) {
-	cmd := cfgEntry.Cmd
-	runWith := cfgEntry.Run
+func runCmd(key string, cfgEntry CfgEntry) (string, bool, error) {
+	var cmd *exec.Cmd
 
-	// stdin, err := os.Open("/dev/null")
-	// handle(err)
-	// stdout, err := os.OpenFile("/dev/null", os.O_RDWR, os.ModeCharDevice)
-	// handle(err)
-	// stderr, err := os.OpenFile("/dev/null", os.O_RDWR, os.ModeCharDevice)
-	// handle(err)
-
-	var sysproc = &syscall.SysProcAttr{Noctty: true}
-	var attr = os.ProcAttr{
-		Dir: os.Getenv("HOME"),
-		Env: os.Environ(),
-		Files: []*os.File{
-			os.Stdin,
-			nil,
-			nil,
-		},
-		Sys: sysproc,
+	uuid, err := uuid.NewRandom()
+	if err != nil {
+		return "", false, err
 	}
 
-	var name string
-	var argv []string
-
-	if runWith == "" {
-		name = "/usr/bin/systemd-run"
-		argv = []string{"systemd-run", "--user", "bash", "-c", cmd}
-	} else {
-		// TODO: pass into exec manually
-		name = "/bin/bash"
-		argv = []string{name, "-c", cmd}
+	args := []string{
+		"--no-ask-password",
+		"--unit", "cactus-" + uuid.String(),
+		"--description", fmt.Sprintf("Cactus Start for command: '%s'", cfgEntry.Cmd),
+		"--send-sighup",
+		"--working-directory",
+		os.Getenv("HOME"), "--user",
 	}
 
-	process, err := os.StartProcess("/usr/bin/systemd-run", argv, &attr)
-	// process, err := os.StartProcess(name, argv, &attr)
-	handle(err)
+	switch cfgEntry.Run {
+	case "dash":
+		args = append(args, "/usr/bin/dash", "-c", cfgEntry.Cmd)
+	case "bash":
+		args = append(args, "/usr/bin/bash", "-c", cfgEntry.Cmd)
+	default:
+		args = append(args, cfgEntry.Cmd)
+	}
 
-	err = process.Release()
-	handle(err)
+	cmd = exec.Command("/usr/bin/systemd-run", args...)
+
+	output, err := cmd.CombinedOutput()
+	return string(output), true, err
 }
 
-func runCmdOnce(key string, cfgEntry CfgEntry) {
+func runCmdOnce(key string, cfgEntry CfgEntry) (string, bool, error) {
 	if isRunning == true {
-		return
+		return "", false, nil
 	}
 
 	isRunning = true
-	runCmd(key, cfgEntry)
+	return runCmd(key, cfgEntry)
 }
 
 func buildGuiTableRows(cfgToml CfgToml) []*g.RowWidget {

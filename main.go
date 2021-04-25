@@ -7,6 +7,8 @@ import (
 	cli "github.com/urfave/cli/v2"
 )
 
+var errorOutput = ""
+
 func loop(cfg CfgToml) {
 	if g.IsKeyDown(g.KeyEscape) {
 		os.Exit(0)
@@ -16,12 +18,21 @@ func loop(cfg CfgToml) {
 	// who's value is cfgEntry
 	for key, cfgEntry := range cfg {
 		if g.IsKeyDown(keyMap[key]) {
-			runCmdOnce(key, cfgEntry)
-			os.Exit(1)
+			output, didRun, err := runCmdOnce(key, cfgEntry)
+			if didRun {
+				if err != nil {
+					// TODO: show error and output
+					// errorOutput = err.Error()
+					errorOutput = output
+				} else {
+					os.Exit(0)
+				}
+			}
 		}
 	}
 
 	g.SingleWindow("Runner").Layout(
+		g.Label(errorOutput),
 		g.Table("Command Table").FastMode(true).Rows(buildGuiTableRows(cfg)...),
 	)
 }

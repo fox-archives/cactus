@@ -37,3 +37,7 @@ cmd = "code"
 From glfw
 
 https://pkg.go.dev/github.com/AllenDang/giu@v0.5.3?utm_source=gopls#Key
+
+## TOD
+
+- proper error handling
