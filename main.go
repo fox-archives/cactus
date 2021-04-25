@@ -1,13 +1,26 @@
 package main
 
 import (
+	"image/color"
 	"os"
 
 	g "github.com/AllenDang/giu"
 	cli "github.com/urfave/cli/v2"
 )
 
-var errorOutput = ""
+type GlobalCmdResult struct {
+	err         error
+	output      string
+	cfgEntryKey string
+	cfgEntry    CfgEntry
+}
+
+var globalCmdResult = &GlobalCmdResult{
+	err:         nil,
+	output:      "",
+	cfgEntryKey: "",
+	cfgEntry:    CfgEntry{},
+}
 
 func loop(cfg CfgToml) {
 	if g.IsKeyDown(g.KeyEscape) {
@@ -21,9 +34,12 @@ func loop(cfg CfgToml) {
 			output, didRun, err := runCmdOnce(key, cfgEntry)
 			if didRun {
 				if err != nil {
-					// TODO: show error and output
-					// errorOutput = err.Error()
-					errorOutput = output
+					globalCmdResult = &GlobalCmdResult{
+						err:         err,
+						output:      output,
+						cfgEntryKey: key,
+						cfgEntry:    cfgEntry,
+					}
 				} else {
 					os.Exit(0)
 				}
@@ -31,9 +47,27 @@ func loop(cfg CfgToml) {
 		}
 	}
 
+	var widgets []g.Widget
+	// if there is some error, prepend the output
+	if globalCmdResult.err != nil {
+		widgets = append(widgets, g.Label("Error"))
+		widgets = append(widgets, g.Label(globalCmdResult.err.Error()))
+
+		widgets = append(widgets, g.Label("Output"))
+		widgets = append(widgets, g.Label(globalCmdResult.output))
+
+		table := g.Table("Command Table").Rows(g.Row(
+			g.Label(globalCmdResult.cfgEntryKey),
+			g.Label(globalCmdResult.cfgEntry.Cmd),
+		).BgColor(&(color.RGBA{200, 100, 100, 255})))
+		widgets = append(widgets, table)
+	} else {
+		table := g.Table("Command Table").FastMode(true).Rows(buildGuiTableRows(cfg)...)
+		widgets = append(widgets, table)
+	}
+
 	g.SingleWindow("Runner").Layout(
-		g.Label(errorOutput),
-		g.Table("Command Table").FastMode(true).Rows(buildGuiTableRows(cfg)...),
+		widgets...,
 	)
 }
 
