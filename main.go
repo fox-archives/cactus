@@ -12,9 +12,11 @@ func loop(cfg CfgToml) {
 		os.Exit(0)
 	}
 
-	for key, value := range cfg {
+	// key is the highest parent properties of the config,
+	// who's value is cfgEntry
+	for key, cfgEntry := range cfg {
 		if g.IsKeyDown(keyMap[key]) {
-			runCmdOnce(key, value.Cmd, value.Run)
+			runCmdOnce(key, cfgEntry)
 			os.Exit(1)
 		}
 	}

@@ -10,12 +10,9 @@ import (
 
 var isRunning = false
 
-func runCmdOnce(key string, cmd string, runWith string) {
-	if isRunning == true {
-		return
-	}
-
-	isRunning = true
+func runCmd(key string, cfgEntry CfgEntry) {
+	cmd := cfgEntry.Cmd
+	runWith := cfgEntry.Run
 
 	// stdin, err := os.Open("/dev/null")
 	// handle(err)
@@ -54,6 +51,15 @@ func runCmdOnce(key string, cmd string, runWith string) {
 
 	err = process.Release()
 	handle(err)
+}
+
+func runCmdOnce(key string, cfgEntry CfgEntry) {
+	if isRunning == true {
+		return
+	}
+
+	isRunning = true
+	runCmd(key, cfgEntry)
 }
 
 func buildGuiTableRows(cfgToml CfgToml) []*g.RowWidget {
