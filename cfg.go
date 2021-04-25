@@ -9,13 +9,20 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-type CfgToml map[string]CfgEntry
+type CfgCactus struct {
+	// Full path to font
+	FontFile string
+	// Size of the font
+	FontSize int
+}
+
+type CfgBind map[string]CfgEntry
 type CfgEntry struct {
 	Cmd string `toml: "cmd"`
 	Run string `toml: "run"`
 }
 
-func getCfgFile() string {
+func getCfgFile(file string) string {
 	var cfgDir string
 
 	if os.Getenv("XDG_CONFIG_HOME") != "" {
@@ -24,10 +31,10 @@ func getCfgFile() string {
 		cfgDir = filepath.Join(os.Getenv("HOME"), ".config")
 	}
 
-	return filepath.Join(cfgDir, "cactus", "binds.toml")
+	return filepath.Join(cfgDir, "cactus", file)
 }
 
-func getCfg(cfgFile string) CfgToml {
+func getCfgBinds(cfgFile string) CfgBind {
 	cfgText, err := ioutil.ReadFile(cfgFile)
 	if os.IsNotExist(err) {
 		fmt.Printf("Error: Config file '%s' does not exist\n", cfgFile)
@@ -35,9 +42,30 @@ func getCfg(cfgFile string) CfgToml {
 	}
 	handle(err)
 
-	var cfgToml CfgToml
-	err = toml.Unmarshal(cfgText, &cfgToml)
+	var cfgBind CfgBind
+	err = toml.Unmarshal(cfgText, &cfgBind)
 	handle(err)
 
-	return cfgToml
+	return cfgBind
+}
+
+func getCfgCactus(cfgFile string) CfgCactus {
+	cfgText, err := ioutil.ReadFile(cfgFile)
+	if os.IsNotExist(err) {
+		fmt.Printf("Error: Config file '%s' does not exist\n", cfgFile)
+		os.Exit(1)
+	}
+	handle(err)
+
+	var cfgCactus CfgCactus
+	err = toml.Unmarshal(cfgText, &cfgCactus)
+	handle(err)
+
+	if cfgCactus.FontSize == 0 {
+		cfgCactus.FontSize = 16
+	}
+
+	cfgCactus.FontFile = os.ExpandEnv(cfgCactus.FontFile)
+
+	return cfgCactus
 }

@@ -53,20 +53,20 @@ func runCmdOnce(key string, cfgEntry CfgEntry) (string, bool, error) {
 	return runCmd(key, cfgEntry)
 }
 
-func buildGuiTableRows(cfgToml CfgToml) []*g.RowWidget {
+func buildGuiTableRows(cfgBind CfgBind) []*g.RowWidget {
 	// created sort keys
 	// without this, the menu will ranomdly change
 	// ordering, as go does
-	var sortedKeys = make([]string, 0, len(cfgToml))
-	for key := range cfgToml {
+	var sortedKeys = make([]string, 0, len(cfgBind))
+	for key := range cfgBind {
 		sortedKeys = append(sortedKeys, key)
 	}
 	sort.Strings(sortedKeys)
 
 	// create the ui rows
-	var rowWidgets = make([]*g.RowWidget, 0, len(cfgToml))
+	var rowWidgets = make([]*g.RowWidget, 0, len(cfgBind))
 	for _, key := range sortedKeys {
-		value := cfgToml[key]
+		value := cfgBind[key]
 
 		rowWidgets = append(rowWidgets, g.Row(
 			g.Label(key),

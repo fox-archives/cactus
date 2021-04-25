@@ -5,6 +5,7 @@ import (
 	"os"
 
 	g "github.com/AllenDang/giu"
+	"github.com/AllenDang/giu/imgui"
 	cli "github.com/urfave/cli/v2"
 )
 
@@ -22,23 +23,23 @@ var globalCmdResult = &GlobalCmdResult{
 	cfgEntry:    CfgEntry{},
 }
 
-func loop(cfg CfgToml) {
+func loop(cfgCactus CfgCactus, binds CfgBind) {
 	if g.IsKeyDown(g.KeyEscape) {
 		os.Exit(0)
 	}
 
 	// key is the highest parent properties of the config,
 	// who's value is cfgEntry
-	for key, cfgEntry := range cfg {
+	for key, bindEntry := range binds {
 		if g.IsKeyDown(keyMap[key]) {
-			output, didRun, err := runCmdOnce(key, cfgEntry)
+			output, didRun, err := runCmdOnce(key, bindEntry)
 			if didRun {
 				if err != nil {
 					globalCmdResult = &GlobalCmdResult{
 						err:         err,
 						output:      output,
 						cfgEntryKey: key,
-						cfgEntry:    cfgEntry,
+						cfgEntry:    bindEntry,
 					}
 				} else {
 					os.Exit(0)
@@ -62,7 +63,7 @@ func loop(cfg CfgToml) {
 		).BgColor(&(color.RGBA{200, 100, 100, 255})))
 		widgets = append(widgets, table)
 	} else {
-		table := g.Table("Command Table").FastMode(true).Rows(buildGuiTableRows(cfg)...)
+		table := g.Table("Command Table").FastMode(true).Rows(buildGuiTableRows(binds)...)
 		widgets = append(widgets, table)
 	}
 
@@ -85,17 +86,32 @@ func main() {
 		EnableBashCompletion: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
+				Name:    "binds",
+				Aliases: []string{"b"},
+				Value:   getCfgFile("binds.ini"),
+				Usage:   "Location of bindings",
+			},
+			&cli.StringFlag{
 				Name:    "config",
 				Aliases: []string{"c"},
-				Value:   getCfgFile(),
+				Value:   getCfgFile("cactus.toml"),
 				Usage:   "Location of configuration file",
 			},
 		},
 		Action: func(c *cli.Context) error {
+			binds := getCfgBinds(c.String("binds"))
+			cfg := getCfgCactus(c.String("config"))
+
+			imgui.CreateContext(nil)
+
+			if cfg.FontFile != "" {
+				imgui.CurrentIO().Fonts().AddFontFromFileTTF(cfg.FontFile, float32(cfg.FontSize))
+			}
+
 			wnd := g.NewMasterWindow("Cactus", 750, 450, g.MasterWindowFlagsNotResizable|g.MasterWindowFlagsFloating, nil)
 
 			wnd.Run(func() {
-				loop(getCfg(c.String("config")))
+				loop(cfg, binds)
 			})
 
 			return nil
