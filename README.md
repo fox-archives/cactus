@@ -20,6 +20,7 @@ The output of all running commands would show in the journal and applications th
 - Choose shell per command to use
 - By default, pass arguments directly to exec-style function (faster startup)
 - Shells out to `systemd-run` behind the scenes
+- Config hot reload (you may have to hover your mouse over interface for an update due to ImgGUI)
 
 ## Setup
 
@@ -49,10 +50,15 @@ cmd = "cd ~/repos/sticker-selector && go run ."
 
 From glfw
 
+[key.go](./key.go)
+
 https://pkg.go.dev/github.com/AllenDang/giu@v0.5.3?utm_source=gopls#Key
 
 ## TODO
 
-- multi keys
 - automatick binds to show journal / output
-- ini format
+
+## Potential Improvements
+
+- add font
+- use init format

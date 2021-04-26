@@ -1,69 +1,95 @@
 package main
 
 import (
-	"image/color"
 	"os"
+	"strings"
 
 	g "github.com/AllenDang/giu"
 	"github.com/AllenDang/giu/imgui"
+	"github.com/eankeen/cactus/cfg"
+	"github.com/fsnotify/fsnotify"
 	cli "github.com/urfave/cli/v2"
 )
 
 type GlobalCmdResult struct {
-	err         error
-	output      string
-	cfgEntryKey string
-	cfgEntry    CfgEntry
+	err        error
+	output     string
+	keyBindKey string
+	keyBind    cfg.KeybindEntry
 }
 
 var globalCmdResult = &GlobalCmdResult{
-	err:         nil,
-	output:      "",
-	cfgEntryKey: "",
-	cfgEntry:    CfgEntry{},
+	err:        nil,
+	output:     "",
+	keyBindKey: "",
+	keyBind:    cfg.KeybindEntry{},
 }
 
-func loop(cfgCactus CfgCactus, binds CfgBind) {
+func runCmdOnceWrapper(key string, bindEntry cfg.KeybindEntry) {
+	output, didRun, err := runCmdOnce(key, bindEntry)
+	if didRun {
+		if err != nil {
+			globalCmdResult = &GlobalCmdResult{
+				err:        err,
+				output:     output,
+				keyBindKey: key,
+				keyBind:    bindEntry,
+			}
+		} else {
+			os.Exit(0)
+		}
+	}
+}
+
+func loop(cfg *cfg.Cfg, binds *cfg.Keybinds) {
 	if g.IsKeyDown(g.KeyEscape) {
 		os.Exit(0)
 	}
 
 	// key is the highest parent properties of the config,
 	// who's value is cfgEntry
-	for key, bindEntry := range binds {
-		if g.IsKeyDown(keyMap[key]) {
-			output, didRun, err := runCmdOnce(key, bindEntry)
-			if didRun {
-				if err != nil {
-					globalCmdResult = &GlobalCmdResult{
-						err:         err,
-						output:      output,
-						cfgEntryKey: key,
-						cfgEntry:    bindEntry,
-					}
-				} else {
-					os.Exit(0)
-				}
+	for key, bindEntry := range *binds {
+		var mod string
+
+		if strings.Contains(key, "-") {
+			strs := strings.Split(key, "-")
+			mod = strs[0]
+			key = strs[1]
+
+			if mod == "Shift" && (g.IsKeyDown(g.KeyLeftShift) || g.IsKeyDown(g.KeyRightShift)) && g.IsKeyDown(keyMap[key]) {
+				runCmdOnceWrapper(key, bindEntry)
+			} else if mod == "Control" && (g.IsKeyDown(g.KeyLeftControl) || g.IsKeyDown(g.KeyRightControl)) && g.IsKeyDown(keyMap[key]) {
+				runCmdOnceWrapper(key, bindEntry)
+			} else if mod == "Alt" && (g.IsKeyDown(g.KeyLeftAlt) || g.IsKeyDown(g.KeyRightAlt)) && g.IsKeyDown(keyMap[key]) {
+				runCmdOnceWrapper(key, bindEntry)
+			}
+		} else {
+			if mod == "" && g.IsKeyDown(keyMap[key]) {
+				runCmdOnceWrapper(key, bindEntry)
 			}
 		}
+
 	}
 
 	var widgets []g.Widget
-	// if there is some error, prepend the output
+	// if there is some error, show it to the top
 	if globalCmdResult.err != nil {
-		widgets = append(widgets, g.Label("Error"))
+		widgets = append(widgets, g.Label("ERROR"))
 		widgets = append(widgets, g.Label(globalCmdResult.err.Error()))
+		widgets = append(widgets, g.Label(""))
 
-		widgets = append(widgets, g.Label("Output"))
+		widgets = append(widgets, g.Label("OUTPUT"))
 		widgets = append(widgets, g.Label(globalCmdResult.output))
+		widgets = append(widgets, g.Label(""))
 
-		table := g.Table("Command Table").Rows(g.Row(
-			g.Label(globalCmdResult.cfgEntryKey),
-			g.Label(globalCmdResult.cfgEntry.Cmd),
-		).BgColor(&(color.RGBA{200, 100, 100, 255})))
-		widgets = append(widgets, table)
+		widgets = append(widgets, g.Label("KEY"))
+		widgets = append(widgets, g.Label("Mod: "+globalCmdResult.keyBind.Mod))
+		widgets = append(widgets, g.Label("Run: "+globalCmdResult.keyBind.Run))
+		widgets = append(widgets, g.Label("Cmd: "+globalCmdResult.keyBind.Cmd))
 	} else {
-		table := g.Table("Command Table").FastMode(true).Rows(buildGuiTableRows(binds)...)
+		table := g.Table("Command Table").FastMode(true).Rows(buildGuiTableRows(*binds)...).Flags(
+			imgui.TableFlags_Resizable | imgui.TableFlags_RowBg | imgui.TableFlags_Borders | imgui.TableFlags_SizingFixedFit | imgui.TableFlags_ScrollX | imgui.TableFlags_ScrollY,
+		)
 		widgets = append(widgets, table)
 	}
 
@@ -88,7 +114,7 @@ func main() {
 			&cli.StringFlag{
 				Name:    "binds",
 				Aliases: []string{"b"},
-				Value:   getCfgFile("binds.ini"),
+				Value:   getCfgFile("binds.toml"),
 				Usage:   "Location of bindings",
 			},
 			&cli.StringFlag{
@@ -99,21 +125,77 @@ func main() {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			binds := getCfgBinds(c.String("binds"))
-			cfg := getCfgCactus(c.String("config"))
+			// configuration
+			keybindsMnger := cfg.NewKeybindsMnger(c.String("binds"))
+			err := keybindsMnger.Reload()
+			handle(err)
 
-			imgui.CreateContext(nil)
+			cfgMnger := cfg.NewCfgMnger(c.String("config"))
+			err = cfgMnger.Reload()
+			handle(err)
+
+			cfg := cfgMnger.Get()
+			keybindings := keybindsMnger.Get()
+
+			// watcher
+			watcher, err := fsnotify.NewWatcher()
+			handle(err)
+			defer watcher.Close()
+
+			done := make(chan bool)
+			go func() {
+				for {
+					select {
+					case event, ok := <-watcher.Events:
+						if !ok {
+							return
+						}
+
+						if event.Op&fsnotify.Write == fsnotify.Write {
+							err = keybindsMnger.Reload()
+							handle(err)
+
+							err = cfgMnger.Reload()
+							handle(err)
+
+							// TODO ?
+							// imgui.NewFrame()
+							// imgui.Render()
+							// drawData := imgui.RenderedDrawData()
+							// fmt.Println(drawData.Valid())
+						}
+					case err, ok := <-watcher.Errors:
+						if !ok {
+							return
+						}
+
+						handle(err)
+					}
+				}
+			}()
+
+			err = watcher.Add(c.String("binds"))
+			handle(err)
+			err = watcher.Add(c.String("config"))
+			handle(err)
+
+			// imgui
+			ctx := imgui.CreateContext(nil)
+			err = ctx.SetCurrent()
+			handle(err)
 
 			if cfg.FontFile != "" {
 				imgui.CurrentIO().Fonts().AddFontFromFileTTF(cfg.FontFile, float32(cfg.FontSize))
 			}
+			// imgui.CurrentIO().Fonts().Build()
 
-			wnd := g.NewMasterWindow("Cactus", 750, 450, g.MasterWindowFlagsNotResizable|g.MasterWindowFlagsFloating, nil)
+			wnd := g.NewMasterWindow("Cactus", 800, 450, g.MasterWindowFlagsNotResizable|g.MasterWindowFlagsFloating, nil)
 
 			wnd.Run(func() {
-				loop(cfg, binds)
+				loop(cfg, keybindings)
 			})
 
+			<-done
 			return nil
 		},
 	}
