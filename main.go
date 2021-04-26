@@ -83,7 +83,7 @@ func loop(cfg *cfg.Cfg, binds *cfg.Keybinds) {
 		widgets = append(widgets, g.Label(""))
 
 		widgets = append(widgets, g.Label("KEY"))
-		widgets = append(widgets, g.Label("Mod: "+globalCmdResult.keyBind.Mod))
+		// TODO: print mod
 		widgets = append(widgets, g.Label("Run: "+globalCmdResult.keyBind.Run))
 		widgets = append(widgets, g.Label("Cmd: "+globalCmdResult.keyBind.Cmd))
 	} else {

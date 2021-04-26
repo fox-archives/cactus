@@ -45,15 +45,21 @@ go install .
 
 ```toml
 # $XDG_CONFIG_HOME/cactus/binds.toml
+# assorted supported mappings
+
 [A]
 cmd = "pavucontrol"
 
-[O]
+[Control-O]
 cmd = "obs"
 
-[S]
+[Shift-S]
 run = "dash"
 cmd = "cd ~/repos/sticker-selector && go run ."
+
+[Alt-B]
+run = "bash"
+cmd = "</dev/null ls -al
 ```
 
 ## Key Names

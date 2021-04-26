@@ -9,7 +9,6 @@ import (
 
 type Keybinds map[string]KeybindEntry
 type KeybindEntry struct {
-	Mod string `toml: "mod"`
 	Cmd string `toml: "cmd"`
 	Run string `toml: "run"`
 }
