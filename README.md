@@ -31,6 +31,16 @@ super + y
 	cactus
 ```
 
+## Usage
+
+- AUR PKGBUILD TODO
+
+```sh
+git clone https://github.com/eankeen/cactus
+cd cactus
+go install .
+```
+
 ## Configuration
 
 ```toml
