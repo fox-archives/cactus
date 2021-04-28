@@ -1,10 +1,8 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	g "github.com/AllenDang/giu"
@@ -99,21 +97,7 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 
 			widgets = append(widgets, g.Line(
 				g.Button(key).OnClick(func() {
-					value = strings.TrimSpace(value)
-
-					var cmd *exec.Cmd
-
-					_, err := os.Stat("/usr/bin/dash")
-					if errors.Is(err, os.ErrNotExist) {
-						cmd = exec.Command("/usr/bin/sh", "-c", fmt.Sprintf("echo %s | xclip -r -selection clipboard", value))
-					} else if err != nil {
-						util.Handle(err)
-					} else {
-						cmd = exec.Command("/usr/bin/dash", "-c", fmt.Sprintf("echo %s | xclip -r -selection clipboard", value))
-					}
-
-					_, err = cmd.CombinedOutput()
-					util.Handle(err)
+					util.CopyToClipboard(value)
 				}),
 				g.Label(value),
 			))
@@ -126,9 +110,24 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 			g.Label("KEY"),
 		))
 
-		widgets = append(widgets, g.Label("As: "+myCmd.Keybind.As))
-		widgets = append(widgets, g.Label("Cmd: "+myCmd.Keybind.Cmd))
-		widgets = append(widgets, g.Label("Args: ["))
+		widgets = append(widgets, g.Line(
+			g.Button("As").OnClick(func() {
+				util.CopyToClipboard(myCmd.Keybind.As)
+			}),
+			g.Label(myCmd.Keybind.As),
+		))
+		widgets = append(widgets, g.Line(
+			g.Button("Cmd").OnClick(func() {
+				util.CopyToClipboard(myCmd.Keybind.Cmd)
+			}),
+			g.Label(myCmd.Keybind.Cmd),
+		))
+		widgets = append(widgets, g.Line(
+			g.Button("Args").OnClick(func() {
+				util.CopyToClipboard(strings.Join(myCmd.Keybind.Args, " "))
+			}),
+			g.Label("["),
+		))
 		for _, arg := range myCmd.Keybind.Args {
 			widgets = append(widgets, g.Label(
 				fmt.Sprintf("  '%s'", arg),
@@ -136,9 +135,25 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 		}
 
 		widgets = append(widgets, g.Label("]"))
-		widgets = append(widgets, g.Label(fmt.Sprintf("Wait: %t", myCmd.Keybind.Wait)))
-		widgets = append(widgets, g.Label("Key: "+myCmd.KeybindKey))
-		widgets = append(widgets, g.Label("Mod: "+myCmd.KeybindMod))
+
+		widgets = append(widgets, g.Line(
+			g.Button("Wait").OnClick(func() {
+				util.CopyToClipboard(fmt.Sprintf("%t", myCmd.Keybind.Wait))
+			}),
+			g.Label(fmt.Sprintf("%t", myCmd.Keybind.Wait)),
+		))
+		widgets = append(widgets, g.Line(
+			g.Button("Key").OnClick(func() {
+				util.CopyToClipboard(myCmd.KeybindKey)
+			}),
+			g.Label(myCmd.KeybindKey),
+		))
+		widgets = append(widgets, g.Line(
+			g.Button("Mod").OnClick(func() {
+				util.CopyToClipboard(myCmd.KeybindMod)
+			}),
+			g.Label(myCmd.KeybindMod),
+		))
 		widgets = append(widgets, g.Label(""))
 
 		// RAW OUTPUT
@@ -147,7 +162,9 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 				g.ArrowButton("Arrow", g.DirectionRight),
 				g.Label("RAW OUTPUT"),
 			))
-
+			widgets = append(widgets, g.Button("Copy Raw Output").OnClick(func() {
+				util.CopyToClipboard(myCmd.Result.Output)
+			}))
 			widgets = append(widgets, g.Label(myCmd.Result.Output))
 		}
 	} else {

@@ -1,13 +1,17 @@
 package util
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	g "github.com/AllenDang/giu"
+	"github.com/alessio/shellescape"
 	"github.com/eankeen/cactus/cfg"
 )
 
@@ -48,6 +52,24 @@ func ParseSystemdRunOutput(output string) [][]string {
 	}
 
 	return keyValueArr
+}
+
+func CopyToClipboard(data string) {
+	data = strings.TrimSpace(data)
+
+	var cmd *exec.Cmd
+
+	_, err := os.Stat("/usr/bin/dash")
+	if errors.Is(err, os.ErrNotExist) {
+		cmd = exec.Command("/usr/bin/sh", "-c", fmt.Sprintf("echo %s | xclip -r -selection clipboard", shellescape.Quote(data)))
+	} else if err != nil {
+		Handle(err)
+	} else {
+		cmd = exec.Command("/usr/bin/dash", "-c", fmt.Sprintf("echo %s | xclip -r -selection clipboard", shellescape.Quote(data)))
+	}
+
+	err = cmd.Start()
+	Handle(err)
 }
 
 // Build array of rows for the main display
