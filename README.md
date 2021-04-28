@@ -49,37 +49,9 @@ super + y
 
 ## Configuration
 
-```toml
-# $XDG_CONFIG_HOME/cactus/binds.toml
+Place configuration in `$XDG_CONFIG_HOME/cactus/binds.toml`. See [./share/sample.toml](./share/sample.toml) for details
 
-# If `run` is `exec` or is absent, `cactus` executes directly to
-# e.g. `execv` using `cmd` and `args`
-[B]
-as = "exec"
-cmd = "brave"
-
-[Control-B]
-cmd = "brave"
-
-[Shift-B]
-cmd = "vlc"
-args = ["--rate", "0.5", "--play-and-stop"]
-
-[Alt-B]
-cmd = "vlc"
-args = ["--loop", "--ignore-filetypes"]
-
-
-# Else if `run` is `dash`, or `bash`, `cactus` executes using
-# e.g. `bash` using `cmd` only
-[Shift-J]
-as = "sh"
-cmd = "cd ~/repos/sticker-selector && go run ."
-
-[J]
-as = "bash"
-cmd = "</dev/null ls -al
-```
+You also must have a `$XDG_CONFIG_HOME/cactus/cactus.toml`. It can be blank
 
 ## Options
 
@@ -116,17 +88,12 @@ Remember, if you are launching `cactus` through another hotkey daemon that is la
 
 ## TODO
 
-- gorouting when execing only when wait = true (systemd-run returns immediately)
-- delete systemd service unit after wars (or have a respective setting)
-- ad hoc keybindings to change auxillary settings
-- other TODOs
-- fix horizontal scrollbar
-- Create cactus journal and log invocations and various services to it so they are visible?
 - proper error handling
-- cleanup dependencies
-- filter so that Ctrl-V, Shift-V, and V are next to each other
 
 ## Potential Improvements
 
+- delete systemd service unit afterwards (or have a respective setting) (is needed?, one approach is to keep an extra go process alive for every unit)
+- ad hoc keybindings to change auxillary settings
+- sometimes mod key does not work (due to skipping rendering passes on no user interaction?)
 - add font
 - support --tty and stream or stream from journal

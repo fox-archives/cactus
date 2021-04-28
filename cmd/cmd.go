@@ -118,5 +118,4 @@ func (cmd *Cmd) RunCmd() CmdResult {
 		Err:      err,
 		Output:   string(output),
 	}
-
 }

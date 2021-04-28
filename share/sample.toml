@@ -18,18 +18,16 @@ args = ["--loop", "--no-audio", "/home/edwin/Music/sample.mp4"]
 alwaysShowInfo = true
 
 # You also have access to environment variables `cmd` and `args` properties
-# it's implemented using sprig, so you can use a whole
+# It's implemented using sprig, so you can use a whole
 # host of [functions](https://masterminds.github.io/sprig)
 [Ctrl-V]
 cmd = "vlc"
 args = ["--loop", "--no-audio", '{{ env "HOME" }}/Music/sample.mp4']
 alwaysShowInfo = true
 
+# If you choose to execute with the shell, you do not need `args`. Valid values
+# for `as` are "sh" and "bash"
 [S]
 as = "sh"
-cmd = "vlc --loop --ignore-filetypes"
-
-[Shift-S]
-as = "sh"
-cmd = "vlc --something"
-wait = true
+cmd = 'vlc --loop --no-audio "$HOME/Music/sample.mp4" >/dev/null </dev/null'
+alwaysShowInfo = true

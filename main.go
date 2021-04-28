@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/AllenDang/giu"
 	g "github.com/AllenDang/giu"
 	"github.com/AllenDang/giu/imgui"
 	"github.com/eankeen/cactus/cfg"
@@ -155,7 +156,7 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds, myCmd *cmd.Cmd) {
 
 			if modifier == "Shift" && (g.IsKeyDown(g.KeyLeftShift) || g.IsKeyDown(g.KeyRightShift)) && g.IsKeyDown(keymap.Keymap[actualKey]) {
 				matched = key
-			} else if (modifier == "Ctrl" || modifier == "Control") && (g.IsKeyDown(g.KeyLeftControl) || g.IsKeyDown(g.KeyRightControl)) && g.IsKeyDown(keymap.Keymap[actualKey]) {
+			} else if (modifier == "Ctrl" || modifier == "Control") && (g.IsKeyDown(g.KeyLeftControl) || g.IsKeyDown(g.KeyRightControl)) && g.IsKeyPressed(keymap.Keymap[actualKey]) {
 				matched = key
 			} else if (modifier == "Alt") && (g.IsKeyDown(g.KeyLeftAlt) || g.IsKeyDown(g.KeyRightAlt)) && g.IsKeyDown(keymap.Keymap[actualKey]) {
 				matched = key
@@ -195,7 +196,7 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds, myCmd *cmd.Cmd) {
 	if !myCmd.HasRan {
 		// If no commands were run, show the table
 		table := g.Table("Command Table").FastMode(true).Rows(util.BuildGuiTableRows(*keybinds)...).Flags(
-			imgui.TableFlags_Resizable | imgui.TableFlags_RowBg | imgui.TableFlags_Borders | imgui.TableFlags_SizingFixedFit | imgui.TableFlags_ScrollX | imgui.TableFlags_ScrollY | imgui.TableFlags_ScrollY,
+			imgui.TableFlags_RowBg | imgui.TableFlags_Borders | imgui.TableFlags_SizingFixedFit | imgui.TableFlags_ScrollX | imgui.TableFlags_ScrollY,
 		)
 		widgets = append(widgets, table)
 	} else {
@@ -209,9 +210,14 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds, myCmd *cmd.Cmd) {
 			g.Label("SYSTEMD-RUN"),
 		))
 
+		var serviceName string
 		for _, keyValue := range systemdRunOutput {
 			key := keyValue[0]
 			value := keyValue[1]
+
+			if key == "Running as unit" {
+				serviceName = value
+			}
 
 			widgets = append(widgets, g.Line(
 				g.Button(key).OnClick(func() {
@@ -220,8 +226,23 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds, myCmd *cmd.Cmd) {
 				g.Label(value),
 			))
 		}
-
 		widgets = append(widgets, g.Label(""))
+
+		/* --------------------- JOURNALCTL --------------------- */
+		widgets = append(widgets, g.Line(
+			g.ArrowButton("Arrow", g.DirectionRight),
+			g.Label("JOURNALCTL"),
+		))
+
+		widgets = append(widgets,
+			g.Line(
+				g.Button("journalctl").OnClick(func() {
+					util.CopyToClipboard("journalctl --user --follow --unit " + serviceName)
+				}),
+				g.Label("journalctl --user --follow --unit cactus-$UUID.service"),
+			),
+			g.Label(""),
+		)
 
 		/* ------------------------- KEY ------------------------ */
 		widgets = append(widgets, g.Line(
@@ -329,7 +350,7 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds, myCmd *cmd.Cmd) {
 		}
 	}
 
-	g.SingleWindow("Runner").Layout(
+	g.SingleWindow("Runner").Flags(giu.WindowFlagsNoTitleBar | giu.WindowFlagsNoResize | giu.WindowFlagsNoMove | giu.WindowFlagsNoCollapse | giu.WindowFlagsAlwaysAutoResize | giu.WindowFlagsHorizontalScrollbar).Layout(
 		widgets...,
 	)
 }
