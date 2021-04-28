@@ -16,8 +16,8 @@ type KeybindEntry struct {
 	Args []string `toml: "args"`
 
 	// Auxilary members
-	Wait          bool `toml: "wait"`
-	InfoOnSuccess bool `toml: "infoOnSuccess"`
+	Wait           bool `toml: "wait"`
+	AlwaysShowInfo bool `toml: "alwaysShowInfo"`
 }
 
 type keybindsMnger struct {

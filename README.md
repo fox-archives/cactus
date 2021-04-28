@@ -116,12 +116,15 @@ Remember, if you are launching `cactus` through another hotkey daemon that is la
 
 ## TODO
 
-- showSuccess (show the output on success)
 - gorouting when execing only when wait = true (systemd-run returns immediately)
 - delete systemd service unit after wars (or have a respective setting)
 - ad hoc keybindings to change auxillary settings
 - other TODOs
 - fix horizontal scrollbar
+- Create cactus journal and log invocations and various services to it so they are visible?
+- proper error handling
+- cleanup dependencies
+- filter so that Ctrl-V, Shift-V, and V are next to each other
 
 ## Potential Improvements
 

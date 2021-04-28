@@ -1,12 +1,17 @@
 package run
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
+
+	"text/template"
 
 	"github.com/eankeen/cactus/cfg"
+	"github.com/eankeen/cactus/util"
 	"github.com/google/uuid"
 )
 
@@ -32,31 +37,18 @@ func New() *Cmd {
 		KeybindMod: "",
 		// Not defaults, overriden in RunCmdOnce
 		Keybind: cfg.KeybindEntry{
-			Cmd:  "",
-			As:   "",
-			Wait: false,
+			As:             "",
+			Cmd:            "",
+			Args:           []string{},
+			Wait:           false,
+			AlwaysShowInfo: false,
 		},
 		HasRan: false,
 		Result: CmdResult{},
 	}
 }
 
-func (cmd *Cmd) RunCmdOnce(mod string, key string, keybindEntry cfg.KeybindEntry) {
-	// If the result is not nil, we already ran a command
-	if cmd.HasRan {
-		return
-	}
-
-	cmd.KeybindMod = mod
-	cmd.KeybindKey = key
-	cmd.Keybind = keybindEntry
-	cmd.HasRan = true
-
-	// If runCmd() fails to properly run command, it stops execution on it's own
-	cmd.Result = cmd.runCmd()
-}
-
-func (cmd *Cmd) runCmd() CmdResult {
+func (cmd *Cmd) RunCmd() CmdResult {
 	uuid, err := uuid.NewRandom()
 	if err != nil {
 		return CmdResult{
@@ -101,8 +93,33 @@ func (cmd *Cmd) runCmd() CmdResult {
 		args = append(args, cmd.Keybind.Args...)
 	}
 
+	var templatedArgs = make([]string, len(args))
+	for i, arg := range args {
+		template := func(text string) string {
+			envMapper := func() (map[string]string, error) {
+				envMap := make(map[string]string)
+
+				for _, v := range os.Environ() {
+					keyValue := strings.Split(v, "=")
+					envMap[keyValue[0]] = keyValue[1]
+				}
+
+				return envMap, nil
+			}
+			tmpl, err := template.New(arg).Parse(arg)
+			util.Handle(err)
+
+			var b bytes.Buffer
+			tmpl.Execute(&b, envMapper)
+
+			return b.String()
+		}
+
+		templatedArgs[i] = template(arg)
+	}
+
 	execName := "/usr/bin/systemd-run"
-	execCmd := exec.Command(execName, args...)
+	execCmd := exec.Command(execName, templatedArgs...)
 
 	output, err := execCmd.CombinedOutput()
 	return CmdResult{

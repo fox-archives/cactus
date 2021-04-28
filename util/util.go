@@ -60,6 +60,7 @@ func CopyToClipboard(data string) {
 	var cmd *exec.Cmd
 
 	_, err := os.Stat("/usr/bin/dash")
+	// TODO: check if xclip is not installed (show error at top of screen, along with other "Internal Errors?")
 	if errors.Is(err, os.ErrNotExist) {
 		cmd = exec.Command("/usr/bin/sh", "-c", fmt.Sprintf("echo %s | xclip -r -selection clipboard", shellescape.Quote(data)))
 	} else if err != nil {

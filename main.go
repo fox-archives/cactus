@@ -15,171 +15,6 @@ import (
 	cli "github.com/urfave/cli/v2"
 )
 
-// The key the user wants to run. By default, it's blank
-var myCmd = cmd.New()
-
-func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
-	// Quit on Escape
-	if g.IsKeyDown(g.KeyEscape) {
-		os.Exit(0)
-	}
-
-	// 'key' is each key in the config file,
-	// The properties of each key is enumerated in the
-	// members of keybindEntry
-	for key, keybindEntry := range *keybinds {
-		// If there is a hypthen in a config key, assume
-		// it contains a modifier
-		if strings.Contains(key, "-") {
-			strs := strings.Split(key, "-")
-			mod := strs[0]
-			key = strs[1]
-
-			if mod == "Shift" && (g.IsKeyDown(g.KeyLeftShift) || g.IsKeyDown(g.KeyRightShift)) {
-				myCmd.RunCmdOnce(mod, key, keybindEntry)
-				break
-			} else if mod == "Control" && (g.IsKeyDown(g.KeyLeftControl) || g.IsKeyDown(g.KeyRightControl)) {
-				myCmd.RunCmdOnce(mod, key, keybindEntry)
-				break
-			} else if mod == "Alt" && (g.IsKeyDown(g.KeyLeftAlt) || g.IsKeyDown(g.KeyRightAlt)) {
-				myCmd.RunCmdOnce(mod, key, keybindEntry)
-				break
-			}
-		} else {
-			if g.IsKeyDown(keymap.Keymap[key]) {
-				myCmd.RunCmdOnce("", key, keybindEntry)
-				break
-			}
-		}
-	}
-
-	if myCmd.HasRan {
-		// Exit if there is a success and we don't want to show info on success
-		fmt.Println(myCmd.Result.Err, !myCmd.Keybind.InfoOnSuccess)
-		if myCmd.Result.Err == nil && !myCmd.Keybind.InfoOnSuccess {
-			os.Exit(0)
-		}
-	}
-
-	var widgets []g.Widget
-
-	// If we actually ran a command, and there is an error,
-	// show the error instead of the hotkey table
-	if myCmd.HasRan {
-		// RESULT
-		if myCmd.Result.Err != nil {
-			widgets = append(widgets, g.Line(
-				g.ArrowButton("Arrow", g.DirectionRight),
-				g.Label("RESULT"),
-			))
-
-			widgets = append(widgets, g.Label("Error: "+myCmd.Result.Err.Error()))
-			widgets = append(widgets, g.Label("ExecName: "+myCmd.Result.ExecName))
-			widgets = append(widgets, g.Label("ExecArgs: ["))
-			for _, arg := range myCmd.Result.ExecArgs {
-				widgets = append(widgets, g.Label(
-					fmt.Sprintf("  '%s'", arg),
-				))
-			}
-			widgets = append(widgets, g.Label("]"))
-			widgets = append(widgets, g.Label(""))
-		}
-
-		// SYSTEMD-RUN
-		systemdRunOutput := util.ParseSystemdRunOutput(myCmd.Result.Output)
-		widgets = append(widgets, g.Line(
-			g.ArrowButton("Arrow", g.DirectionRight),
-			g.Label("SYSTEMD-RUN"),
-		))
-
-		for _, keyValue := range systemdRunOutput {
-			key := keyValue[0]
-			value := keyValue[1]
-
-			widgets = append(widgets, g.Line(
-				g.Button(key).OnClick(func() {
-					util.CopyToClipboard(value)
-				}),
-				g.Label(value),
-			))
-		}
-		widgets = append(widgets, g.Label(""))
-
-		// KEY
-		widgets = append(widgets, g.Line(
-			g.ArrowButton("Arrow", g.DirectionRight),
-			g.Label("KEY"),
-		))
-
-		widgets = append(widgets, g.Line(
-			g.Button("As").OnClick(func() {
-				util.CopyToClipboard(myCmd.Keybind.As)
-			}),
-			g.Label(myCmd.Keybind.As),
-		))
-		widgets = append(widgets, g.Line(
-			g.Button("Cmd").OnClick(func() {
-				util.CopyToClipboard(myCmd.Keybind.Cmd)
-			}),
-			g.Label(myCmd.Keybind.Cmd),
-		))
-		widgets = append(widgets, g.Line(
-			g.Button("Args").OnClick(func() {
-				util.CopyToClipboard(strings.Join(myCmd.Keybind.Args, " "))
-			}),
-			g.Label("["),
-		))
-		for _, arg := range myCmd.Keybind.Args {
-			widgets = append(widgets, g.Label(
-				fmt.Sprintf("  '%s'", arg),
-			))
-		}
-
-		widgets = append(widgets, g.Label("]"))
-
-		widgets = append(widgets, g.Line(
-			g.Button("Wait").OnClick(func() {
-				util.CopyToClipboard(fmt.Sprintf("%t", myCmd.Keybind.Wait))
-			}),
-			g.Label(fmt.Sprintf("%t", myCmd.Keybind.Wait)),
-		))
-		widgets = append(widgets, g.Line(
-			g.Button("Key").OnClick(func() {
-				util.CopyToClipboard(myCmd.KeybindKey)
-			}),
-			g.Label(myCmd.KeybindKey),
-		))
-		widgets = append(widgets, g.Line(
-			g.Button("Mod").OnClick(func() {
-				util.CopyToClipboard(myCmd.KeybindMod)
-			}),
-			g.Label(myCmd.KeybindMod),
-		))
-		widgets = append(widgets, g.Label(""))
-
-		// RAW OUTPUT
-		if myCmd.Result.Output != "" {
-			widgets = append(widgets, g.Line(
-				g.ArrowButton("Arrow", g.DirectionRight),
-				g.Label("RAW OUTPUT"),
-			))
-			widgets = append(widgets, g.Button("Copy Raw Output").OnClick(func() {
-				util.CopyToClipboard(myCmd.Result.Output)
-			}))
-			widgets = append(widgets, g.Label(myCmd.Result.Output))
-		}
-	} else {
-		table := g.Table("Command Table").FastMode(true).Rows(util.BuildGuiTableRows(*keybinds)...).Flags(
-			imgui.TableFlags_Resizable | imgui.TableFlags_RowBg | imgui.TableFlags_Borders | imgui.TableFlags_SizingFixedFit | imgui.TableFlags_ScrollX | imgui.TableFlags_ScrollY | imgui.TableFlags_ScrollY,
-		)
-		widgets = append(widgets, table)
-	}
-
-	g.SingleWindow("Runner").Layout(
-		widgets...,
-	)
-}
-
 func main() {
 	app := &cli.App{
 		Name:    "cactus",
@@ -207,7 +42,7 @@ func main() {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			// Configuration
+			/* -------------------- Configuration ------------------- */
 			keybindsMnger := cfg.NewKeybindsMnger(c.String("binds"))
 			err := keybindsMnger.Reload()
 			util.Handle(err)
@@ -219,7 +54,7 @@ func main() {
 			cfg := cfgMnger.Get()
 			keybinds := keybindsMnger.Get()
 
-			// Watcher
+			/* ----------------------- Watcher ---------------------- */
 			watcher, err := fsnotify.NewWatcher()
 			util.Handle(err)
 			defer watcher.Close()
@@ -261,7 +96,7 @@ func main() {
 			err = watcher.Add(c.String("config"))
 			util.Handle(err)
 
-			// Imgui
+			/* ------------------------ Imgui ----------------------- */
 			ctx := imgui.CreateContext(nil)
 			err = ctx.SetCurrent()
 			util.Handle(err)
@@ -272,11 +107,10 @@ func main() {
 
 			wnd := g.NewMasterWindow("Cactus", 800, 450, g.MasterWindowFlagsNotResizable|g.MasterWindowFlagsFloating, nil)
 
+			// The key the user wants to run. By default, it's blank
+			var myCmd = cmd.New()
 			wnd.Run(func() {
-				// fmt.Println(keybinds)
-				// b := true
-				// imgui.ShowDemoWindow(&b)
-				loop(cfg, keybinds)
+				loop(cfg, keybinds, myCmd)
 			})
 
 			<-done
@@ -286,4 +120,201 @@ func main() {
 
 	err := app.Run(os.Args)
 	util.Handle(err)
+}
+
+func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds, myCmd *cmd.Cmd) {
+	// Quit on Escape
+	if g.IsKeyDown(g.KeyEscape) {
+		os.Exit(0)
+	}
+
+	// As we iterate over *keybinds, we cannot execute immediately
+	// because there could be a more specific keybind later in the
+	// iteration. Here, we save information  about matches. It has a
+	// format like 'G' or 'Ctrl-G'
+	matched := ""
+
+	// 'key' is each key in the config file,
+	// The properties of each key is enumerated in the
+	// members of keybindEntry
+	for key := range *keybinds {
+		// If there is no hypthen in a config key, it contains a modifier
+		if !strings.Contains(key, "-") {
+			if g.IsKeyDown(keymap.Keymap[key]) {
+				// Only overridie matched if doesn't contain a hypthen (which implies
+				// it is a more specific modifier)
+				if !strings.Contains(key, "-") {
+					matched = key
+				}
+			}
+		} else {
+			// If there is a hypthen, take out the modifier key
+			arr := strings.Split(key, "-")
+			modifier := arr[0]
+			actualKey := arr[1]
+
+			if modifier == "Shift" && (g.IsKeyDown(g.KeyLeftShift) || g.IsKeyDown(g.KeyRightShift)) && g.IsKeyDown(keymap.Keymap[actualKey]) {
+				matched = key
+			} else if (modifier == "Ctrl" || modifier == "Control") && (g.IsKeyDown(g.KeyLeftControl) || g.IsKeyDown(g.KeyRightControl)) && g.IsKeyDown(keymap.Keymap[actualKey]) {
+				matched = key
+			} else if (modifier == "Alt") && (g.IsKeyDown(g.KeyLeftAlt) || g.IsKeyDown(g.KeyRightAlt)) && g.IsKeyDown(keymap.Keymap[actualKey]) {
+				matched = key
+			}
+		}
+	}
+
+	// If we have a match, attempt to execute the keybinding so long as
+	// we haven't already done so
+	if !myCmd.HasRan && matched != "" {
+		fmt.Println("before", !myCmd.Keybind.AlwaysShowInfo)
+
+		myCmd.HasRan = true
+
+		if strings.Contains(matched, "-") {
+			arr := strings.Split(matched, "-")
+			modifier := arr[0]
+			key := arr[1]
+
+			myCmd.KeybindMod = modifier
+			myCmd.KeybindKey = key
+			myCmd.Keybind = (*keybinds)[matched]
+			myCmd.Result = myCmd.RunCmd()
+		} else {
+			myCmd.KeybindMod = ""
+			myCmd.KeybindKey = matched
+			myCmd.Keybind = (*keybinds)[matched]
+			myCmd.Result = myCmd.RunCmd()
+		}
+
+		// Exit if there is a success and we don't want to show info on success
+		fmt.Println(myCmd.Result.Err == nil, !myCmd.Keybind.AlwaysShowInfo)
+		if myCmd.Result.Err == nil && !myCmd.Keybind.AlwaysShowInfo {
+			os.Exit(0)
+		}
+	}
+
+	// SHOW THE GUI
+	var widgets []g.Widget
+	if !myCmd.HasRan {
+		// If no commands were run, show the table
+		table := g.Table("Command Table").FastMode(true).Rows(util.BuildGuiTableRows(*keybinds)...).Flags(
+			imgui.TableFlags_Resizable | imgui.TableFlags_RowBg | imgui.TableFlags_Borders | imgui.TableFlags_SizingFixedFit | imgui.TableFlags_ScrollX | imgui.TableFlags_ScrollY | imgui.TableFlags_ScrollY,
+		)
+		widgets = append(widgets, table)
+	} else {
+		// If we are this far and the commands are
+
+		/* ----------------------- RESULT ----------------------- */
+		if myCmd.Result.Err != nil {
+			widgets = append(widgets, g.Line(
+				g.ArrowButton("Arrow", g.DirectionRight),
+				g.Label("RESULT"),
+			))
+
+			widgets = append(widgets, g.Label("Error: "+myCmd.Result.Err.Error()))
+			widgets = append(widgets, g.Label("ExecName: "+myCmd.Result.ExecName))
+			widgets = append(widgets, g.Label("ExecArgs: ["))
+			for _, arg := range myCmd.Result.ExecArgs {
+				widgets = append(widgets, g.Label(
+					fmt.Sprintf("  '%s'", arg),
+				))
+			}
+			widgets = append(widgets, g.Label("]"))
+			widgets = append(widgets, g.Label(""))
+		}
+
+		/* --------------------- SYSTEMD-RUN -------------------- */
+		systemdRunOutput := util.ParseSystemdRunOutput(myCmd.Result.Output)
+
+		widgets = append(widgets, g.Line(
+			g.ArrowButton("Arrow", g.DirectionRight),
+			g.Label("SYSTEMD-RUN"),
+		))
+
+		for _, keyValue := range systemdRunOutput {
+			key := keyValue[0]
+			value := keyValue[1]
+
+			widgets = append(widgets, g.Line(
+				g.Button(key).OnClick(func() {
+					util.CopyToClipboard(value)
+				}),
+				g.Label(value),
+			))
+		}
+
+		widgets = append(widgets, g.Label(""))
+
+		/* ------------------------- KEY ------------------------ */
+		widgets = append(widgets, g.Line(
+			g.ArrowButton("Arrow", g.DirectionRight),
+			g.Label("KEY"),
+		))
+
+		widgets = append(widgets, g.Line(
+			g.Button("As").OnClick(func() {
+				util.CopyToClipboard(myCmd.Keybind.As)
+			}),
+			g.Label(myCmd.Keybind.As),
+		))
+
+		widgets = append(widgets, g.Line(
+			g.Button("Cmd").OnClick(func() {
+				util.CopyToClipboard(myCmd.Keybind.Cmd)
+			}),
+			g.Label(myCmd.Keybind.Cmd),
+		))
+
+		widgets = append(widgets, g.Line(
+			g.Button("Args").OnClick(func() {
+				util.CopyToClipboard(strings.Join(myCmd.Keybind.Args, " "))
+			}),
+			g.Label("["),
+		))
+		for _, arg := range myCmd.Keybind.Args {
+			widgets = append(widgets, g.Label(
+				fmt.Sprintf("  '%s'", arg),
+			))
+		}
+		widgets = append(widgets, g.Label("]"))
+
+		widgets = append(widgets, g.Line(
+			g.Button("Wait").OnClick(func() {
+				util.CopyToClipboard(fmt.Sprintf("%t", myCmd.Keybind.Wait))
+			}),
+			g.Label(fmt.Sprintf("%t", myCmd.Keybind.Wait)),
+		))
+
+		widgets = append(widgets, g.Line(
+			g.Button("Key").OnClick(func() {
+				util.CopyToClipboard(myCmd.KeybindKey)
+			}),
+			g.Label(myCmd.KeybindKey),
+		))
+
+		widgets = append(widgets, g.Line(
+			g.Button("Mod").OnClick(func() {
+				util.CopyToClipboard(myCmd.KeybindMod)
+			}),
+			g.Label(myCmd.KeybindMod),
+		))
+
+		widgets = append(widgets, g.Label(""))
+
+		/* --------------------- RAW OUTPUT --------------------- */
+		if myCmd.Result.Output != "" {
+			widgets = append(widgets, g.Line(
+				g.ArrowButton("Arrow", g.DirectionRight),
+				g.Label("RAW OUTPUT"),
+			))
+			widgets = append(widgets, g.Button("Copy Raw Output").OnClick(func() {
+				util.CopyToClipboard(myCmd.Result.Output)
+			}))
+			widgets = append(widgets, g.Label(myCmd.Result.Output))
+		}
+	}
+
+	g.SingleWindow("Runner").Layout(
+		widgets...,
+	)
 }
