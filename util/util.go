@@ -75,14 +75,39 @@ func CopyToClipboard(data string) {
 
 // Build array of rows for the main display
 func BuildGuiTableRows(keybinds cfg.Keybinds) []*g.RowWidget {
-	var sortedKeys = make([]string, 0, len(keybinds))
-	for key := range keybinds {
-		sortedKeys = append(sortedKeys, key)
+	reverse := func(input string) string {
+		n := 0
+		rune := make([]rune, len(input))
+
+		for _, r := range input {
+			rune[n] = r
+			n++
+		}
+		rune = rune[0:n]
+
+		for i := 0; i < n/2; i++ {
+			rune[i], rune[n-1-i] = rune[n-1-i], rune[i]
+		}
+
+		return string(rune)
 	}
-	sort.Strings(sortedKeys)
+
+	// Sort
+	var sortedReversedKeys = make([]string, 0, len(keybinds))
+	for key := range keybinds {
+		// We use reverse so ex. Ctrl-N and N are adjacent
+		sortedReversedKeys = append(sortedReversedKeys, reverse(key))
+	}
+	sort.Strings(sortedReversedKeys)
+
+	// Dereverse
+	var sortedKeys = make([]string, 0, len(keybinds))
+	for _, key := range sortedReversedKeys {
+		sortedKeys = append(sortedKeys, reverse(key))
+	}
 
 	// Create the UI rows
-	var rowWidgets = make([]*g.RowWidget, 0, len(keybinds))
+	var rowWidgets = make([]*g.RowWidget, 0, len(sortedKeys))
 	for _, key := range sortedKeys {
 		value := keybinds[key]
 
