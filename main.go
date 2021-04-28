@@ -35,13 +35,13 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 			mod := strs[0]
 			key = strs[1]
 
-			if mod == "Shift" && (g.IsKeyDown(g.KeyLeftShift) || g.IsKeyDown(g.KeyRightShift)) && g.IsKeyDown(keymap.Keymap[key]) {
+			if mod == "Shift" && (g.IsKeyDown(g.KeyLeftShift) || g.IsKeyDown(g.KeyRightShift)) {
 				myCmd.RunCmdOnce(mod, key, keybindEntry)
 				break
-			} else if mod == "Control" && (g.IsKeyDown(g.KeyLeftControl) || g.IsKeyDown(g.KeyRightControl)) && g.IsKeyDown(keymap.Keymap[key]) {
+			} else if mod == "Control" && (g.IsKeyDown(g.KeyLeftControl) || g.IsKeyDown(g.KeyRightControl)) {
 				myCmd.RunCmdOnce(mod, key, keybindEntry)
 				break
-			} else if mod == "Alt" && (g.IsKeyDown(g.KeyLeftAlt) || g.IsKeyDown(g.KeyRightAlt)) && g.IsKeyDown(keymap.Keymap[key]) {
+			} else if mod == "Alt" && (g.IsKeyDown(g.KeyLeftAlt) || g.IsKeyDown(g.KeyRightAlt)) {
 				myCmd.RunCmdOnce(mod, key, keybindEntry)
 				break
 			}
