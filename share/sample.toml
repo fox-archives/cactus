@@ -1,0 +1,13 @@
+[V]
+as = "exec" # default
+cmd = "vlc"
+args = ["--loop", "--ignore-filetypes"]
+
+[M]
+# try as = sh
+as = "exec"
+cmd = "vlc --loop --ignore-filetypes"
+wait = true
+
+[J]
+cmd = "brave"

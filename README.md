@@ -55,7 +55,7 @@ super + y
 # If `run` is `exec` or is absent, `cactus` executes directly to
 # e.g. `execv` using `cmd` and `args`
 [B]
-run = "exec"
+as = "exec"
 cmd = "brave"
 
 [Control-B]
@@ -73,12 +73,33 @@ args = ["--loop", "--ignore-filetypes"]
 # Else if `run` is `dash`, or `bash`, `cactus` executes using
 # e.g. `bash` using `cmd` only
 [Shift-J]
-run = "sh"
+as = "sh"
 cmd = "cd ~/repos/sticker-selector && go run ."
 
 [J]
-run = "bash"
+as = "bash"
 cmd = "</dev/null ls -al
+```
+
+## Options
+
+- `as`
+
+How to execute your program and command line arguments. By default, it is set to `exec`, so you must set `cmd` and `args`, if applicable
+
+```toml
+[V]
+as = "exec" # default
+cmd = "vlc"
+args = ["--loop", "--ignore-filetypes"]
+```
+
+Alternatively, if you wish to leverage shell or bash facilities, we also support the values of `sh` and `bash`. If dash is installed on the system, it will automatically use that instead
+
+```toml
+[M]
+as = "sh"
+cmd = "vlc --loop --ignore-filetypes"
 ```
 
 Find the full keymap list [here](./keymap/keymap.go)

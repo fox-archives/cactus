@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	g "github.com/AllenDang/giu"
@@ -53,7 +55,15 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 		}
 	}
 
+	if myCmd.HasRan {
+		// Exit if there is a success and we don't want to show info on success
+		if myCmd.Result.Err != nil && !myCmd.Keybind.InfoOnSuccess {
+			os.Exit(0)
+		}
+	}
+
 	var widgets []g.Widget
+
 	// If we actually ran a command, and there is an error,
 	// show the error instead of the hotkey table
 	if myCmd.HasRan {
@@ -89,7 +99,21 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 
 			widgets = append(widgets, g.Line(
 				g.Button(key).OnClick(func() {
-					fmt.Println("Copied", value)
+					value = strings.TrimSpace(value)
+
+					var cmd *exec.Cmd
+
+					_, err := os.Stat("/usr/bin/dash")
+					if errors.Is(err, os.ErrNotExist) {
+						cmd = exec.Command("/usr/bin/sh", "-c", fmt.Sprintf("echo %s | xclip -r -selection clipboard", value))
+					} else if err != nil {
+						util.Handle(err)
+					} else {
+						cmd = exec.Command("/usr/bin/dash", "-c", fmt.Sprintf("echo %s | xclip -r -selection clipboard", value))
+					}
+
+					_, err = cmd.CombinedOutput()
+					util.Handle(err)
 				}),
 				g.Label(value),
 			))
@@ -101,6 +125,7 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 			g.ArrowButton("Arrow", g.DirectionRight),
 			g.Label("KEY"),
 		))
+
 		widgets = append(widgets, g.Label("As: "+myCmd.Keybind.As))
 		widgets = append(widgets, g.Label("Cmd: "+myCmd.Keybind.Cmd))
 		widgets = append(widgets, g.Label("Args: ["))
@@ -109,6 +134,7 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 				fmt.Sprintf("  '%s'", arg),
 			))
 		}
+
 		widgets = append(widgets, g.Label("]"))
 		widgets = append(widgets, g.Label(fmt.Sprintf("Wait: %t", myCmd.Keybind.Wait)))
 		widgets = append(widgets, g.Label("Key: "+myCmd.KeybindKey))

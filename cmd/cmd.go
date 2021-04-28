@@ -43,7 +43,7 @@ func New() *Cmd {
 
 func (cmd *Cmd) RunCmdOnce(mod string, key string, keybindEntry cfg.KeybindEntry) {
 	// If the result is not nil, we already ran a command
-	if cmd.HasRan == true {
+	if cmd.HasRan {
 		return
 	}
 
@@ -54,10 +54,6 @@ func (cmd *Cmd) RunCmdOnce(mod string, key string, keybindEntry cfg.KeybindEntry
 
 	// If runCmd() fails to properly run command, it stops execution on it's own
 	cmd.Result = cmd.runCmd()
-
-	if cmd.HasRan && !cmd.Keybind.InfoOnSuccess {
-		os.Exit(0)
-	}
 }
 
 func (cmd *Cmd) runCmd() CmdResult {

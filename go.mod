@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/AllenDang/giu v0.5.3 // indirect
+	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/creack/pty v1.1.11 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-ini/ini v1.62.0 // indirect
