@@ -166,8 +166,6 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds, myCmd *cmd.Cmd) {
 	// If we have a match, attempt to execute the keybinding so long as
 	// we haven't already done so
 	if !myCmd.HasRan && matched != "" {
-		fmt.Println("before", !myCmd.Keybind.AlwaysShowInfo)
-
 		myCmd.HasRan = true
 
 		if strings.Contains(matched, "-") {
@@ -187,7 +185,6 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds, myCmd *cmd.Cmd) {
 		}
 
 		// Exit if there is a success and we don't want to show info on success
-		fmt.Println(myCmd.Result.Err == nil, !myCmd.Keybind.AlwaysShowInfo)
 		if myCmd.Result.Err == nil && !myCmd.Keybind.AlwaysShowInfo {
 			os.Exit(0)
 		}
@@ -202,26 +199,7 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds, myCmd *cmd.Cmd) {
 		)
 		widgets = append(widgets, table)
 	} else {
-		// If we are this far and the commands are
-
-		/* ----------------------- RESULT ----------------------- */
-		if myCmd.Result.Err != nil {
-			widgets = append(widgets, g.Line(
-				g.ArrowButton("Arrow", g.DirectionRight),
-				g.Label("RESULT"),
-			))
-
-			widgets = append(widgets, g.Label("Error: "+myCmd.Result.Err.Error()))
-			widgets = append(widgets, g.Label("ExecName: "+myCmd.Result.ExecName))
-			widgets = append(widgets, g.Label("ExecArgs: ["))
-			for _, arg := range myCmd.Result.ExecArgs {
-				widgets = append(widgets, g.Label(
-					fmt.Sprintf("  '%s'", arg),
-				))
-			}
-			widgets = append(widgets, g.Label("]"))
-			widgets = append(widgets, g.Label(""))
-		}
+		// If we are this far, then print diagnostic information
 
 		/* --------------------- SYSTEMD-RUN -------------------- */
 		systemdRunOutput := util.ParseSystemdRunOutput(myCmd.Result.Output)
@@ -299,6 +277,43 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds, myCmd *cmd.Cmd) {
 			g.Label(myCmd.KeybindMod),
 		))
 
+		widgets = append(widgets, g.Label(""))
+
+		/* ----------------------- RESULT ----------------------- */
+		widgets = append(widgets, g.Line(
+			g.ArrowButton("Arrow", g.DirectionRight),
+			g.Label("RESULT"),
+		))
+
+		if myCmd.Result.Err != nil {
+			widgets = append(widgets, g.Line(
+				g.Button("Error").OnClick(func() {
+					util.CopyToClipboard(myCmd.Result.Err.Error())
+				}),
+				g.Label(myCmd.Result.Err.Error()),
+			))
+		}
+
+		widgets = append(widgets, g.Line(
+			g.Button("ExecName").OnClick(func() {
+				util.CopyToClipboard(myCmd.Result.ExecName)
+			}),
+			g.Label(myCmd.Result.ExecName),
+		))
+
+		widgets = append(widgets, g.Line(
+			g.Button("ExecArgs").OnClick(func() {
+				util.CopyToClipboard(strings.Join(myCmd.Result.ExecArgs, ""))
+			}),
+			g.Label("["),
+		))
+
+		for _, arg := range myCmd.Result.ExecArgs {
+			widgets = append(widgets, g.Label(
+				fmt.Sprintf("  '%s'", arg),
+			))
+		}
+		widgets = append(widgets, g.Label("]"))
 		widgets = append(widgets, g.Label(""))
 
 		/* --------------------- RAW OUTPUT --------------------- */
