@@ -15,7 +15,7 @@ type Cmd struct {
 	KeybindMod string
 	Keybind    cfg.KeybindEntry
 	HasRan     bool
-	Result     *CmdResult
+	Result     CmdResult
 }
 
 type CmdResult struct {
@@ -30,13 +30,14 @@ func New() *Cmd {
 	return &Cmd{
 		KeybindKey: "",
 		KeybindMod: "",
+		// Not defaults, overriden in RunCmdOnce
 		Keybind: cfg.KeybindEntry{
 			Cmd:  "",
 			Run:  "",
 			Wait: false,
 		},
 		HasRan: false,
-		Result: nil,
+		Result: CmdResult{},
 	}
 }
 
@@ -55,7 +56,7 @@ func (cmd *Cmd) RunCmdOnce(mod string, key string, keybindEntry cfg.KeybindEntry
 	cmd.Result = cmd.runCmd()
 }
 
-func (cmd *Cmd) runCmd() *CmdResult {
+func (cmd *Cmd) runCmd() CmdResult {
 	uuid, err := uuid.NewRandom()
 	if err != nil {
 		util.Handle(fmt.Errorf("Error: Could not generate random number\n%w", err))
@@ -88,7 +89,7 @@ func (cmd *Cmd) runCmd() *CmdResult {
 	execCmd := exec.Command(execName, args...)
 
 	output, err := execCmd.CombinedOutput()
-	return &CmdResult{
+	return CmdResult{
 		ExecName: execName,
 		ExecArgs: args,
 		Err:      err,

@@ -22,19 +22,17 @@ func Handle(err error) {
 }
 
 // Build array of rows for the main display
-func BuildGuiTableRows(keyBinds cfg.Keybinds) []*g.RowWidget {
-	// Go likes to change ordering when accessing
-	// elements from a map, so we must explicitly sort
-	var sortedKeys = make([]string, 0, len(keyBinds))
-	for key := range keyBinds {
+func BuildGuiTableRows(keybinds cfg.Keybinds) []*g.RowWidget {
+	var sortedKeys = make([]string, 0, len(keybinds))
+	for key := range keybinds {
 		sortedKeys = append(sortedKeys, key)
 	}
 	sort.Strings(sortedKeys)
 
-	// create the ui rows
-	var rowWidgets = make([]*g.RowWidget, 0, len(keyBinds))
+	// Create the UI rows
+	var rowWidgets = make([]*g.RowWidget, 0, len(keybinds))
 	for _, key := range sortedKeys {
-		value := keyBinds[key]
+		value := keybinds[key]
 
 		rowWidgets = append(rowWidgets, g.Row(
 			g.Label(key),

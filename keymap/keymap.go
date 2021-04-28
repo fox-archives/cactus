@@ -1,8 +1,8 @@
-package main
+package keymap
 
 import g "github.com/AllenDang/giu"
 
-var keyMap = map[string]g.Key{
+var Keymap = map[string]g.Key{
 	"Unknown":      g.KeyUnknown,
 	"Space":        g.KeySpace,
 	"Apostrophe":   g.KeyApostrophe,

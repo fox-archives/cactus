@@ -9,6 +9,7 @@ import (
 	"github.com/AllenDang/giu/imgui"
 	"github.com/eankeen/cactus/cfg"
 	cmd "github.com/eankeen/cactus/cmd"
+	"github.com/eankeen/cactus/keymap"
 	"github.com/eankeen/cactus/util"
 	"github.com/fsnotify/fsnotify"
 	cli "github.com/urfave/cli/v2"
@@ -34,18 +35,18 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 			mod := strs[0]
 			key = strs[1]
 
-			if mod == "Shift" && (g.IsKeyDown(g.KeyLeftShift) || g.IsKeyDown(g.KeyRightShift)) && g.IsKeyDown(keyMap[key]) {
+			if mod == "Shift" && (g.IsKeyDown(g.KeyLeftShift) || g.IsKeyDown(g.KeyRightShift)) && g.IsKeyDown(keymap.Keymap[key]) {
 				myCmd.RunCmdOnce(mod, key, keybindEntry)
 				break
-			} else if mod == "Control" && (g.IsKeyDown(g.KeyLeftControl) || g.IsKeyDown(g.KeyRightControl)) && g.IsKeyDown(keyMap[key]) {
+			} else if mod == "Control" && (g.IsKeyDown(g.KeyLeftControl) || g.IsKeyDown(g.KeyRightControl)) && g.IsKeyDown(keymap.Keymap[key]) {
 				myCmd.RunCmdOnce(mod, key, keybindEntry)
 				break
-			} else if mod == "Alt" && (g.IsKeyDown(g.KeyLeftAlt) || g.IsKeyDown(g.KeyRightAlt)) && g.IsKeyDown(keyMap[key]) {
+			} else if mod == "Alt" && (g.IsKeyDown(g.KeyLeftAlt) || g.IsKeyDown(g.KeyRightAlt)) && g.IsKeyDown(keymap.Keymap[key]) {
 				myCmd.RunCmdOnce(mod, key, keybindEntry)
 				break
 			}
 		} else {
-			if g.IsKeyDown(keyMap[key]) {
+			if g.IsKeyDown(keymap.Keymap[key]) {
 				myCmd.RunCmdOnce("", key, keybindEntry)
 				break
 			}
@@ -119,7 +120,7 @@ func main() {
 			util.Handle(err)
 
 			cfg := cfgMnger.Get()
-			keybindings := keybindsMnger.Get()
+			keybinds := keybindsMnger.Get()
 
 			// Watcher
 			watcher, err := fsnotify.NewWatcher()
@@ -175,7 +176,7 @@ func main() {
 			wnd := g.NewMasterWindow("Cactus", 800, 450, g.MasterWindowFlagsNotResizable|g.MasterWindowFlagsFloating, nil)
 
 			wnd.Run(func() {
-				loop(cfg, keybindings)
+				loop(cfg, keybinds)
 			})
 
 			<-done
