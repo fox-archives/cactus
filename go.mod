@@ -19,6 +19,7 @@ require (
 	github.com/mitchellh/copystructure v1.1.2 // indirect
 	github.com/motemen/gore v0.5.2 // indirect
 	github.com/pelletier/go-toml v1.9.0 // indirect
+	github.com/pelletier/go-toml/v2 v2.0.0-alpha.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/urfave/cli/v2 v2.3.0 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect

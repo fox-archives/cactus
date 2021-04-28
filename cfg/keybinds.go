@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	// TODO: use v2
 	"github.com/pelletier/go-toml"
 )
 
-// TODO: file wide auxilary member defaults and 'As'
 type Keybinds map[string]KeybindEntry
 type KeybindEntry struct {
 	As   string   `toml: "run"`
