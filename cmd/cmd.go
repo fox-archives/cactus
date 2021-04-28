@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 
 	"text/template"
 
+	"github.com/Masterminds/sprig"
 	"github.com/eankeen/cactus/cfg"
 	"github.com/eankeen/cactus/util"
 	"github.com/google/uuid"
@@ -96,21 +96,11 @@ func (cmd *Cmd) RunCmd() CmdResult {
 	var templatedArgs = make([]string, len(args))
 	for i, arg := range args {
 		template := func(text string) string {
-			envMapper := func() (map[string]string, error) {
-				envMap := make(map[string]string)
-
-				for _, v := range os.Environ() {
-					keyValue := strings.Split(v, "=")
-					envMap[keyValue[0]] = keyValue[1]
-				}
-
-				return envMap, nil
-			}
-			tmpl, err := template.New(arg).Parse(arg)
+			tpl, err := template.New("foo").Funcs(sprig.TxtFuncMap()).Parse(arg)
 			util.Handle(err)
 
 			var b bytes.Buffer
-			tmpl.Execute(&b, envMapper)
+			tpl.Execute(&b, struct{}{})
 
 			return b.String()
 		}
@@ -124,7 +114,7 @@ func (cmd *Cmd) RunCmd() CmdResult {
 	output, err := execCmd.CombinedOutput()
 	return CmdResult{
 		ExecName: execName,
-		ExecArgs: args,
+		ExecArgs: templatedArgs,
 		Err:      err,
 		Output:   string(output),
 	}

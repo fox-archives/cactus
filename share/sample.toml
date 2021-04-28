@@ -1,5 +1,6 @@
-# On the assumption that /home/edwin/sample.mp4 exists and is a valid .mp4 file, this
-# command exits successfully, and the `cactus` menu disappears. To keep the menu, use the
+# Each hotkey is a property with members defining the hotkey's behaviors
+# After pressing [V], the command exits successfully (if the file exists)
+# and the `cactus` menu disappears. To keep the menu, use the
 # `alwaysShowInfo` property (as seen with  [Shift-V])
 [V]
 cmd = "vlc"
@@ -7,25 +8,28 @@ args = ["--loop", "--no-audio", "/home/edwin/Music/sample.mp4"]
 
 # alwaysShowInfo is by default false, because a successfull invocation means
 # you don't need the cactus pop-up window to show anymore. To still see the popup
-# and related info about the service, set `alwaysShowInfo` to true
+# and related info about the service, set `alwaysShowInfo` to true.
+# And, when using modifiers like 'Shift', ensure you press it first, _then_
+# the alphabetical key
 [Shift-V]
 as = "exec" # default
 cmd = "vlc"
 args = ["--loop", "--no-audio", "/home/edwin/Music/sample.mp4"]
 alwaysShowInfo = true
 
-# You also have access to environment variables via Go templates for the `cmd` and
-# `args` properties
+# You also have access to environment variables `cmd` and `args` properties
+# it's implemented using sprig, so you can use a whole
+# host of [functions](https://masterminds.github.io/sprig)
 [Ctrl-V]
 cmd = "vlc"
-args = ["--loop", "--no-audio", "{{ .HOME }}/Music/sample.mp4"]
+args = ["--loop", "--no-audio", '{{ env "HOME" }}/Music/sample.mp4']
 alwaysShowInfo = true
 
-[M]
-# try as = sh
-as = "exec"
+[S]
+as = "sh"
 cmd = "vlc --loop --ignore-filetypes"
-wait = true
 
-[J]
-cmd = "brave"
+[Shift-S]
+as = "sh"
+cmd = "vlc --something"
+wait = true
