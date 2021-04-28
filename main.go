@@ -55,7 +55,8 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 
 	if myCmd.HasRan {
 		// Exit if there is a success and we don't want to show info on success
-		if myCmd.Result.Err != nil && !myCmd.Keybind.InfoOnSuccess {
+		fmt.Println(myCmd.Result.Err, !myCmd.Keybind.InfoOnSuccess)
+		if myCmd.Result.Err == nil && !myCmd.Keybind.InfoOnSuccess {
 			os.Exit(0)
 		}
 	}
