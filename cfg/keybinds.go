@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	// TODO: use v2
 	"github.com/pelletier/go-toml"
 )
 
+// TODO: file wide auxilary member defaults and 'As'
 type Keybinds map[string]KeybindEntry
 type KeybindEntry struct {
 	As   string   `toml: "run"`
@@ -14,8 +16,8 @@ type KeybindEntry struct {
 	Args []string `toml: "args"`
 
 	// Auxilary members
-	Wait            bool `toml: "wait"`
-	OutputOnSuccess bool `toml: "outputOnSuccess"`
+	Wait          bool `toml: "wait"`
+	InfoOnSuccess bool `toml: "infoOnSuccess"`
 }
 
 type keybindsMnger struct {

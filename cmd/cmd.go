@@ -1,6 +1,7 @@
 package run
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -54,7 +55,7 @@ func (cmd *Cmd) RunCmdOnce(mod string, key string, keybindEntry cfg.KeybindEntry
 	// If runCmd() fails to properly run command, it stops execution on it's own
 	cmd.Result = cmd.runCmd()
 
-	if cmd.Result.Err == nil {
+	if cmd.HasRan && !cmd.Keybind.InfoOnSuccess {
 		os.Exit(0)
 	}
 }
@@ -85,9 +86,17 @@ func (cmd *Cmd) runCmd() CmdResult {
 
 	args = append(args, "--")
 
+	// TODO custom ones
 	switch cmd.Keybind.As {
 	case "sh":
-		args = append(args, "/usr/bin/dash", "-c", cmd.Keybind.Cmd)
+		_, err := os.Stat("/usr/bin/dash")
+		if errors.Is(err, os.ErrNotExist) {
+			args = append(args, "/usr/bin/sh", "-c", cmd.Keybind.Cmd)
+		} else {
+			// use dash directly if possible, even 'sh' is specified since
+			// sometimes 'sh' is symlinked to bash
+			args = append(args, "/usr/bin/dash", "-c", cmd.Keybind.Cmd)
+		}
 	case "bash":
 		args = append(args, "/usr/bin/bash", "-c", cmd.Keybind.Cmd)
 	default:

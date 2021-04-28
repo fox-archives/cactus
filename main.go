@@ -73,9 +73,8 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 				))
 			}
 			widgets = append(widgets, g.Label("]"))
-
+			widgets = append(widgets, g.Label(""))
 		}
-		widgets = append(widgets, g.Label(""))
 
 		// SYSTEMD-RUN
 		systemdRunOutput := util.ParseSystemdRunOutput(myCmd.Result.Output)
@@ -124,7 +123,6 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 			))
 
 			widgets = append(widgets, g.Label(myCmd.Result.Output))
-
 		}
 	} else {
 		table := g.Table("Command Table").FastMode(true).Rows(util.BuildGuiTableRows(*keybinds)...).Flags(
