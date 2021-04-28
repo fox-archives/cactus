@@ -9,8 +9,9 @@ import (
 
 type Keybinds map[string]KeybindEntry
 type KeybindEntry struct {
-	Cmd string `toml: "cmd"`
-	Run string `toml: "run"`
+	Cmd  string `toml: "cmd"`
+	Run  string `toml: "run"`
+	Wait bool   `toml: "wait"`
 }
 
 type keybindsMnger struct {
@@ -33,7 +34,7 @@ func (km *keybindsMnger) Get() *Keybinds {
 }
 
 func (km *keybindsMnger) Reload() error {
-	keybindings, err := km.parseConfig(km.path)
+	keybindings, err := km.parseConfig()
 	if err != nil {
 		return err
 	}
@@ -42,17 +43,16 @@ func (km *keybindsMnger) Reload() error {
 	return nil
 }
 
-// TODO bindingsFile repetitive
-func (km *keybindsMnger) parseConfig(bindingsFile string) (Keybinds, error) {
-	cfgText, err := ioutil.ReadFile(bindingsFile)
+func (kbm *keybindsMnger) parseConfig() (Keybinds, error) {
+	cfgText, err := ioutil.ReadFile(kbm.path)
 	if err != nil {
-		return Keybinds{}, fmt.Errorf("Error: Could not read the file '%s'. Ensure the file exists and has the proper permissions\n%w", bindingsFile, err)
+		return Keybinds{}, fmt.Errorf("Error: Could not read the file '%s'. Ensure the file exists and has the proper permissions\n%w", kbm.path, err)
 	}
 
 	var keyBinds Keybinds
 	err = toml.Unmarshal(cfgText, &keyBinds)
 	if err != nil {
-		return Keybinds{}, fmt.Errorf("Error: Could not unmarshal contents of file '%s'. Ensure the file is valid TOML\n%w", bindingsFile, err)
+		return Keybinds{}, fmt.Errorf("Error: Could not unmarshal contents of file '%s'. Ensure the file is valid TOML\n%w", kbm.path, err)
 	}
 
 	return keyBinds, nil

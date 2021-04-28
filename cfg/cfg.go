@@ -34,6 +34,7 @@ func NewCfgMnger(cfgFile string) cfgMnger {
 func (c *cfgMnger) Get() *Cfg {
 	return &c.cfg
 }
+
 func (c *cfgMnger) Reload() error {
 	cfg, err := c.parseConfig(c.path)
 	if err != nil {
