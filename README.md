@@ -24,7 +24,7 @@ Not only that, but applications that quit unsuccessfully or dumped their cores s
 - Choose shell or exec per command to use
 - View list of all available commands so you don't have to remember it right away
 - By default, pass arguments directly to exec-style function (faster startup)
-- Shells out to `systemd-run` behind the scenes
+- Execs out to `systemd-run` behind the scenes
 - Config hot reload (you may have to hover your mouse over interface for an update due to ImgGUI)
 - Escape to close window
 
@@ -73,7 +73,7 @@ args = ["--loop", "--ignore-filetypes"]
 # Else if `run` is `dash`, or `bash`, `cactus` executes using
 # e.g. `bash` using `cmd` only
 [Shift-J]
-run = "dash"
+run = "sh"
 cmd = "cd ~/repos/sticker-selector && go run ."
 
 [J]
@@ -81,7 +81,7 @@ run = "bash"
 cmd = "</dev/null ls -al
 ```
 
-Find the full keymap list [here](./key.go)
+Find the full keymap list [here](./keymap/keymap.go)
 
 ## Troubleshooting
 

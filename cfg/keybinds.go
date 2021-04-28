@@ -9,9 +9,13 @@ import (
 
 type Keybinds map[string]KeybindEntry
 type KeybindEntry struct {
-	Cmd  string `toml: "cmd"`
-	Run  string `toml: "run"`
-	Wait bool   `toml: "wait"`
+	As   string   `toml: "run"`
+	Cmd  string   `toml: "cmd"`
+	Args []string `toml: "args"`
+
+	// Auxilary members
+	Wait            bool `toml: "wait"`
+	OutputOnSuccess bool `toml: "outputOnSuccess"`
 }
 
 type keybindsMnger struct {

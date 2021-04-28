@@ -6,7 +6,6 @@ import (
 	"os/exec"
 
 	"github.com/eankeen/cactus/cfg"
-	"github.com/eankeen/cactus/util"
 	"github.com/google/uuid"
 )
 
@@ -33,7 +32,7 @@ func New() *Cmd {
 		// Not defaults, overriden in RunCmdOnce
 		Keybind: cfg.KeybindEntry{
 			Cmd:  "",
-			Run:  "",
+			As:   "",
 			Wait: false,
 		},
 		HasRan: false,
@@ -54,12 +53,21 @@ func (cmd *Cmd) RunCmdOnce(mod string, key string, keybindEntry cfg.KeybindEntry
 
 	// If runCmd() fails to properly run command, it stops execution on it's own
 	cmd.Result = cmd.runCmd()
+
+	if cmd.Result.Err == nil {
+		os.Exit(0)
+	}
 }
 
 func (cmd *Cmd) runCmd() CmdResult {
 	uuid, err := uuid.NewRandom()
 	if err != nil {
-		util.Handle(fmt.Errorf("Error: Could not generate random number\n%w", err))
+		return CmdResult{
+			ExecName: "",
+			ExecArgs: []string{},
+			Err:      fmt.Errorf("Cactus Internal Error: Could not generate random number\n%w", err),
+			Output:   "",
+		}
 	}
 
 	args := []string{
@@ -67,22 +75,25 @@ func (cmd *Cmd) runCmd() CmdResult {
 		"--unit", "cactus-" + uuid.String(),
 		"--description", fmt.Sprintf("Cactus Start for command: '%s'", cmd.Keybind.Cmd),
 		"--send-sighup",
-		"--working-directory",
-
-		os.Getenv("HOME"), "--user",
+		"--working-directory", os.Getenv("HOME"),
+		"--user",
 	}
 
 	if cmd.Keybind.Wait {
 		args = append(args, "--wait")
 	}
 
-	switch cmd.Keybind.Run {
-	case "dash":
+	args = append(args, "--")
+
+	switch cmd.Keybind.As {
+	case "sh":
 		args = append(args, "/usr/bin/dash", "-c", cmd.Keybind.Cmd)
 	case "bash":
 		args = append(args, "/usr/bin/bash", "-c", cmd.Keybind.Cmd)
 	default:
+		cmd.Keybind.As = "exec"
 		args = append(args, cmd.Keybind.Cmd)
+		args = append(args, cmd.Keybind.Args...)
 	}
 
 	execName := "/usr/bin/systemd-run"

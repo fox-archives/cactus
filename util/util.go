@@ -1,10 +1,11 @@
 package util
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	g "github.com/AllenDang/giu"
 	"github.com/eankeen/cactus/cfg"
@@ -16,9 +17,37 @@ func Handle(err error) {
 		if isDebug {
 			panic(err)
 		} else {
-			fmt.Println(err)
+			log.Fatalln(err)
 		}
 	}
+}
+
+type SystemdRunOutput struct {
+	RunningAsUnit             string
+	FinishedWithResult        string
+	MainProcessTerminatedWith string
+	ServiceRuntime            string
+	CPUTimeConsumed           string
+}
+
+func ParseSystemdRunOutput(output string) [][]string {
+	// An array of key value pairs
+	keyValueArr := [][]string{}
+
+	for _, line := range strings.Split(output, "\n") {
+		arr := strings.Split(line, ":")
+		if len(arr) < 2 {
+			continue
+		}
+
+		key := arr[0]
+		value := arr[1]
+		value = strings.TrimSpace(value)
+
+		keyValueArr = append(keyValueArr, []string{key, value})
+	}
+
+	return keyValueArr
 }
 
 // Build array of rows for the main display
@@ -36,7 +65,7 @@ func BuildGuiTableRows(keybinds cfg.Keybinds) []*g.RowWidget {
 
 		rowWidgets = append(rowWidgets, g.Row(
 			g.Label(key),
-			g.Label(value.Cmd),
+			g.Label(value.Cmd+" "+strings.Join(value.Args, " ")),
 		))
 	}
 

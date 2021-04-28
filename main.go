@@ -57,23 +57,78 @@ func loop(cfg *cfg.Cfg, keybinds *cfg.Keybinds) {
 	// If we actually ran a command, and there is an error,
 	// show the error instead of the hotkey table
 	if myCmd.HasRan {
-		widgets = append(widgets, g.Label("RESULT: ERROR"))
-		widgets = append(widgets, g.Label(myCmd.Result.Err.Error()))
+		// RESULT
+		if myCmd.Result.Err != nil {
+			widgets = append(widgets, g.Line(
+				g.ArrowButton("Arrow", g.DirectionRight),
+				g.Label("RESULT"),
+			))
+
+			widgets = append(widgets, g.Label("Error: "+myCmd.Result.Err.Error()))
+			widgets = append(widgets, g.Label("ExecName: "+myCmd.Result.ExecName))
+			widgets = append(widgets, g.Label("ExecArgs: ["))
+			for _, arg := range myCmd.Result.ExecArgs {
+				widgets = append(widgets, g.Label(
+					fmt.Sprintf("  '%s'", arg),
+				))
+			}
+			widgets = append(widgets, g.Label("]"))
+
+		}
 		widgets = append(widgets, g.Label(""))
 
-		widgets = append(widgets, g.Label("RESULT: OUTPUT"))
-		widgets = append(widgets, g.Label(myCmd.Result.Output))
+		// SYSTEMD-RUN
+		systemdRunOutput := util.ParseSystemdRunOutput(myCmd.Result.Output)
+		widgets = append(widgets, g.Line(
+			g.ArrowButton("Arrow", g.DirectionRight),
+			g.Label("SYSTEMD-RUN"),
+		))
+
+		for _, keyValue := range systemdRunOutput {
+			key := keyValue[0]
+			value := keyValue[1]
+
+			widgets = append(widgets, g.Line(
+				g.Button(key).OnClick(func() {
+					fmt.Println("Copied", value)
+				}),
+				g.Label(value),
+			))
+		}
 		widgets = append(widgets, g.Label(""))
 
-		widgets = append(widgets, g.Label("KEY"))
+		// KEY
+		widgets = append(widgets, g.Line(
+			g.ArrowButton("Arrow", g.DirectionRight),
+			g.Label("KEY"),
+		))
+		widgets = append(widgets, g.Label("As: "+myCmd.Keybind.As))
+		widgets = append(widgets, g.Label("Cmd: "+myCmd.Keybind.Cmd))
+		widgets = append(widgets, g.Label("Args: ["))
+		for _, arg := range myCmd.Keybind.Args {
+			widgets = append(widgets, g.Label(
+				fmt.Sprintf("  '%s'", arg),
+			))
+		}
+		widgets = append(widgets, g.Label("]"))
+		widgets = append(widgets, g.Label(fmt.Sprintf("Wait: %t", myCmd.Keybind.Wait)))
 		widgets = append(widgets, g.Label("Key: "+myCmd.KeybindKey))
 		widgets = append(widgets, g.Label("Mod: "+myCmd.KeybindMod))
-		widgets = append(widgets, g.Label("Run: "+myCmd.Keybind.Run))
-		widgets = append(widgets, g.Label("Cmd: "+myCmd.Keybind.Cmd))
-		widgets = append(widgets, g.Label(fmt.Sprintf("Wait: %t", myCmd.Keybind.Wait)))
+		widgets = append(widgets, g.Label(""))
+
+		// RAW OUTPUT
+		if myCmd.Result.Output != "" {
+			widgets = append(widgets, g.Line(
+				g.ArrowButton("Arrow", g.DirectionRight),
+				g.Label("RAW OUTPUT"),
+			))
+
+			widgets = append(widgets, g.Label(myCmd.Result.Output))
+
+		}
 	} else {
 		table := g.Table("Command Table").FastMode(true).Rows(util.BuildGuiTableRows(*keybinds)...).Flags(
-			imgui.TableFlags_Resizable | imgui.TableFlags_RowBg | imgui.TableFlags_Borders | imgui.TableFlags_SizingFixedFit | imgui.TableFlags_ScrollX | imgui.TableFlags_ScrollY,
+			imgui.TableFlags_Resizable | imgui.TableFlags_RowBg | imgui.TableFlags_Borders | imgui.TableFlags_SizingFixedFit | imgui.TableFlags_ScrollX | imgui.TableFlags_ScrollY | imgui.TableFlags_ScrollY,
 		)
 		widgets = append(widgets, table)
 	}
@@ -176,6 +231,9 @@ func main() {
 			wnd := g.NewMasterWindow("Cactus", 800, 450, g.MasterWindowFlagsNotResizable|g.MasterWindowFlagsFloating, nil)
 
 			wnd.Run(func() {
+				// fmt.Println(keybinds)
+				// b := true
+				// imgui.ShowDemoWindow(&b)
 				loop(cfg, keybinds)
 			})
 
