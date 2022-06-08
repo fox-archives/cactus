@@ -11,7 +11,7 @@ import (
 
 	g "github.com/AllenDang/giu"
 	"github.com/alessio/shellescape"
-	"github.com/eankeen/cactus/cfg"
+	"github.com/hyperupcall/cactus/cfg"
 )
 
 func Handle(err error) {

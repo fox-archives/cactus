@@ -7,12 +7,12 @@ import (
 
 	"github.com/AllenDang/giu"
 	g "github.com/AllenDang/giu"
-	"github.com/AllenDang/giu/imgui"
-	"github.com/eankeen/cactus/cfg"
-	cmd "github.com/eankeen/cactus/cmd"
-	"github.com/eankeen/cactus/keymap"
-	"github.com/eankeen/cactus/util"
+	"github.com/AllenDang/imgui-go"
 	"github.com/fsnotify/fsnotify"
+	"github.com/hyperupcall/cactus/cfg"
+	cmd "github.com/hyperupcall/cactus/cmd"
+	"github.com/hyperupcall/cactus/keymap"
+	"github.com/hyperupcall/cactus/util"
 	cli "github.com/urfave/cli/v2"
 )
 

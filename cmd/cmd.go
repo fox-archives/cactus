@@ -10,9 +10,9 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	"github.com/eankeen/cactus/cfg"
-	"github.com/eankeen/cactus/util"
 	"github.com/google/uuid"
+	"github.com/hyperupcall/cactus/cfg"
+	"github.com/hyperupcall/cactus/util"
 )
 
 type Cmd struct {

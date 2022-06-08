@@ -30,10 +30,8 @@ Not only that, but applications that quit unsuccessfully or dumped their cores s
 
 ## Usage
 
-- AUR PKGBUILD TODO
-
 ```sh
-git clone https://github.com/eankeen/cactus
+git clone https://github.com/hyperupcall/cactus
 cd cactus
 go install .
 ```
@@ -52,27 +50,6 @@ super + y
 Place configuration in `$XDG_CONFIG_HOME/cactus/binds.toml`. See [./share/sample.toml](./share/sample.toml) for details
 
 You also must have a `$XDG_CONFIG_HOME/cactus/cactus.toml`. It can be blank
-
-## Options
-
-- `as`
-
-How to execute your program and command line arguments. By default, it is set to `exec`, so you must set `cmd` and `args`, if applicable
-
-```toml
-[V]
-as = "exec" # default
-cmd = "vlc"
-args = ["--loop", "--ignore-filetypes"]
-```
-
-Alternatively, if you wish to leverage shell or bash facilities, we also support the values of `sh` and `bash`. If dash is installed on the system, it will automatically use that instead
-
-```toml
-[M]
-as = "sh"
-cmd = "vlc --loop --ignore-filetypes"
-```
 
 Find the full keymap list [here](./keymap/keymap.go)
 
